@@ -1,0 +1,118 @@
+{
+    "common": {
+        "loading": "Loading...",
+        "close": "Close",
+        "back": "Back",
+        "confirm": "Confirm",
+        "cancel": "Cancel",
+        "submit": "Submit",
+        "buy": "Buy",
+        "next": "Next",
+        "start": "Start",
+        "save": "Save"
+    },
+    "landing": {
+        "subtitle": "An edu-game on labor, fair trade & structural empathy",
+        "cta_teacher": "Teacher Login",
+        "cta_student": "Student Join",
+        "tagline": "Free the Sages imprisoned in the Castle of Silence",
+        "feature1": "4-Phase Immersive Story",
+        "feature2": "AI NPC Interactions",
+        "feature3": "Real-time Collaborative Learning",
+        "feature4": "Fair Price Simulator"
+    },
+    "auth": {
+        "teacher_login": "Teacher Login",
+        "student_join": "Student Join",
+        "enter_code": "Enter Class Code",
+        "enter_name": "Enter Your Name",
+        "test_account": "Enter as Test Account",
+        "join_button": "Join"
+    },
+    "onboarding": {
+        "title": "Persona Assignment",
+        "crystal_ball": "The crystal ball decides your destiny",
+        "shuffling": "Assigning...",
+        "your_persona": "Your Persona",
+        "abilities": "Special Abilities"
+    },
+    "persona": {
+        "Alpha": {
+            "name": "Alpha",
+            "role": "Data Analyst",
+            "desc": "A sharp analyst who sees the world through numbers and statistics"
+        },
+        "Delta": {
+            "name": "Delta",
+            "role": "Peace Mediator",
+            "desc": "A warm communicator who dissolves conflict with empathy"
+        },
+        "Omega": {
+            "name": "Omega",
+            "role": "Idea Designer",
+            "desc": "An innovator who turns the impossible into possible"
+        },
+        "Lambda": {
+            "name": "Lambda",
+            "role": "Healing Supporter",
+            "desc": "A warm supporter who restores the team's energy"
+        },
+        "Sigma": {
+            "name": "Sigma",
+            "role": "Critical Guardian",
+            "desc": "A sharp-eyed justice advocate who sees through injustice"
+        }
+    },
+    "game": {
+        "phase0": {
+            "name": "The Veil of Illusion",
+            "desc": "The truth hidden behind sweet temptation"
+        },
+        "phase1": {
+            "name": "Magnifier of Truth",
+            "desc": "Discover the hidden traces of exploitation"
+        },
+        "phase2": {
+            "name": "Debate of Wisdom",
+            "desc": "Persuade the stakeholders"
+        },
+        "phase3": {
+            "name": "Design of Fairness",
+            "desc": "Design a fair price"
+        },
+        "xp": "XP",
+        "teamwork": "Teamwork",
+        "shop": "Shop",
+        "notifications": "Notifications",
+        "my_team": "My Team",
+        "golden_seal": "Golden Seal",
+        "npc_trust": "NPC Trust"
+    },
+    "shop": {
+        "title": "Fair Price Shop",
+        "subtitle": "Buy items with your XP",
+        "category_all": "All",
+        "category_consumable": "Items",
+        "category_cosmetic": "Cosmetics",
+        "category_team": "Team Items",
+        "buy_button": "{{cost}} XP",
+        "owned": "Owned",
+        "insufficient_xp": "Not enough XP",
+        "purchase_complete": "Purchased!"
+    },
+    "results": {
+        "title": "Session Results",
+        "liberation": "The Castle of Silence opens!",
+        "ranking": "Rankings",
+        "stats": "Detailed Stats",
+        "export_csv": "Export CSV",
+        "end_class": "End Class",
+        "well_done": "Well done! The Castle of Silence has regained its light. ✨"
+    },
+    "notifications": {
+        "no_notifications": "No notifications",
+        "mark_all_read": "Mark all read",
+        "clear_all": "Clear all",
+        "unread_count": "{{count}} unread"
+    }
+}

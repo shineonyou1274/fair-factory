@@ -1,0 +1,23 @@
+{
+    "rules": {
+        "sessions": {
+            "$sessionId": {
+                "currentPhase": {
+                    ".read": "auth != null",
+                    ".write": "auth != null && root.child('teachers').child(auth.uid).child('role').val() in ['teacher', 'superadmin']",
+                    ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 3"
+                },
+                ".read": "auth != null",
+                ".write": "auth != null && root.child('teachers').child(auth.uid).child('role').val() in ['teacher', 'superadmin']"
+            }
+        },
+        "presence": {
+            "$sessionId": {
+                "$userId": {
+                    ".read": "auth != null",
+                    ".write": "auth != null && auth.uid == $userId"
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,118 @@
+{
+    "common": {
+        "loading": "불러오는 중...",
+        "close": "닫기",
+        "back": "뒤로",
+        "confirm": "확인",
+        "cancel": "취소",
+        "submit": "제출",
+        "buy": "구매",
+        "next": "다음",
+        "start": "시작",
+        "save": "저장"
+    },
+    "landing": {
+        "subtitle": "노동·공정무역·구조적 공감 체험 에듀게임",
+        "cta_teacher": "선생님 로그인",
+        "cta_student": "학생 입장",
+        "tagline": "침묵의 성에 갇힌 현자들을 구하라",
+        "feature1": "4단계 몰입형 스토리",
+        "feature2": "AI NPC 상호작용",
+        "feature3": "실시간 협동 학습",
+        "feature4": "공정 가격 시뮬레이터"
+    },
+    "auth": {
+        "teacher_login": "선생님 로그인",
+        "student_join": "학생 입장",
+        "enter_code": "학급 코드 입력",
+        "enter_name": "이름 입력",
+        "test_account": "테스트 계정으로 입장",
+        "join_button": "입장하기"
+    },
+    "onboarding": {
+        "title": "페르소나 배정",
+        "crystal_ball": "수정구슬이 당신의 운명을 결정합니다",
+        "shuffling": "배정 중...",
+        "your_persona": "당신의 페르소나",
+        "abilities": "특수 능력"
+    },
+    "persona": {
+        "Alpha": {
+            "name": "알파",
+            "role": "데이터 분석가",
+            "desc": "숫자와 통계로 세상을 꿰뚫는 냉철한 분석가"
+        },
+        "Delta": {
+            "name": "델타",
+            "role": "평화 중재자",
+            "desc": "갈등을 녹이는 따뜻한 공감과 소통의 달인"
+        },
+        "Omega": {
+            "name": "오메가",
+            "role": "아이디어 설계자",
+            "desc": "창의적 해결책으로 불가능을 가능으로 바꾸는 혁신가"
+        },
+        "Lambda": {
+            "name": "람다",
+            "role": "치유 지원가",
+            "desc": "팀의 에너지를 회복시키는 따뜻한 지원자"
+        },
+        "Sigma": {
+            "name": "시그마",
+            "role": "비판적 감시자",
+            "desc": "불의를 꿰뚫는 예리한 시선의 정의 수호자"
+        }
+    },
+    "game": {
+        "phase0": {
+            "name": "환상의 장막",
+            "desc": "달콤한 유혹 뒤에 숨겨진 진실"
+        },
+        "phase1": {
+            "name": "진실의 돋보기",
+            "desc": "숨겨진 착취의 흔적을 발견하라"
+        },
+        "phase2": {
+            "name": "지혜의 토론",
+            "desc": "이해관계자를 설득하라"
+        },
+        "phase3": {
+            "name": "공정의 설계",
+            "desc": "공정한 가격을 설계하라"
+        },
+        "xp": "경험치",
+        "teamwork": "팀워크",
+        "shop": "상점",
+        "notifications": "알림",
+        "my_team": "우리 모둠",
+        "golden_seal": "황금 인장",
+        "npc_trust": "NPC 신뢰도"
+    },
+    "shop": {
+        "title": "공정가 상점",
+        "subtitle": "XP로 아이템을 구매하세요",
+        "category_all": "전체",
+        "category_consumable": "소모품",
+        "category_cosmetic": "장식",
+        "category_team": "팀 아이템",
+        "buy_button": "{{cost}} XP",
+        "owned": "보유 중",
+        "insufficient_xp": "XP 부족",
+        "purchase_complete": "구매 완료!"
+    },
+    "results": {
+        "title": "수업 결산",
+        "liberation": "침묵의 성이 열립니다!",
+        "ranking": "순위",
+        "stats": "세부 통계",
+        "export_csv": "결과 CSV 내보내기",
+        "end_class": "수업 마치기",
+        "well_done": "수고하셨습니다! 침묵의 성이 다시 빛을 되찾았습니다. ✨"
+    },
+    "notifications": {
+        "no_notifications": "알림이 없습니다",
+        "mark_all_read": "모두 읽음",
+        "clear_all": "모두 지우기",
+        "unread_count": "읽지 않은 알림 {{count}}개"
+    }
+}

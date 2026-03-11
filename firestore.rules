@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── 헬퍼 함수 ──────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isTeacher() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.role in ['teacher', 'superadmin'];
+    }
+    function isSuperAdmin() {
+      return isSignedIn() &&
+        get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.role == 'superadmin';
+    }
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ─── 교사 컬렉션 ─────────────────────────────────────────
+    match /teachers/{teacherId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(teacherId) || isSuperAdmin();
+    }
+
+    // ─── 세션 컬렉션 ─────────────────────────────────────────
+    match /sessions/{sessionId} {
+      // 모든 로그인 사용자가 읽기 가능 (학생이 코드로 찾아야 함)
+      allow read: if isSignedIn();
+      // 교사만 생성/수정
+      allow create: if isTeacher();
+      allow update: if isTeacher() && resource.data.teacherId == request.auth.uid;
+      allow delete: if isSuperAdmin();
+    }
+
+    // ─── 모둠 컬렉션 ─────────────────────────────────────────
+    match /groups/{groupId} {
+      allow read: if isSignedIn();
+      allow write: if isTeacher();
+    }
+
+    // ─── 학생 활동 컬렉션 ────────────────────────────────────
+    match /studentActivities/{studentId} {
+      // 본인 데이터만 읽기/쓰기, 교사는 전체 읽기 가능
+      allow read: if isOwner(studentId) || isTeacher();
+      allow write: if isOwner(studentId);
+    }
+
+    // ─── 리포트 컬렉션 ───────────────────────────────────────
+    match /reports/{reportId} {
+      // 학생: 본인 리포트만 생성/수정
+      // 교사: 같은 세션 리포트 읽기 + 상태 변경
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
+      allow update: if isTeacher() || isOwner(resource.data.studentId);
+      allow delete: if isSuperAdmin();
+    }
+
+    // ─── 채팅 메시지 ─────────────────────────────────────────
+    match /chatMessages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // ─── 관리자 전용 ─────────────────────────────────────────
+    match /adminLogs/{logId} {
+      allow read, write: if isSuperAdmin();
+    }
+  }
+}
