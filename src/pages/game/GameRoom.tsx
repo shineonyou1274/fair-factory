@@ -5,7 +5,7 @@ import { Zap, Heart, Users, Bell, ShoppingBag, ChevronRight } from 'lucide-react
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '@/lib/firebase';
 import { useAuthStore, useSessionStore, useUIStore } from '@/store';
-import { isFirebaseConfigured, MOCK_SESSION } from '@/lib/mockData';
+import { isFirebaseConfigured } from '@/lib/mockData';
 import type { Phase } from '@/types';
 
 import Phase0 from '@/pages/game/phases/Phase0';
@@ -56,12 +56,35 @@ function HUD({
                     <span className="text-xs font-bold sm:hidden" style={{ color: phaseColor }}>P{phase}</span>
                 </div>
 
-                {/* Phase progress */}
-                <div className="flex gap-1">
-                    {[0, 1, 2, 3, 4].map(p => (
-                        <div key={p} className="w-1.5 h-5 rounded-full transition-all"
-                            style={{ background: p <= phase ? PHASE_COLORS[p] : 'rgba(255,255,255,0.1)' }} />
-                    ))}
+                {/* Phase progress — emoji + 이름 + 완료 체크 */}
+                <div className="hidden md:flex items-center gap-1">
+                    {[0, 1, 2, 3, 4].map(p => {
+                        const isDone = p < phase;
+                        const isCurrent = p === phase;
+                        const PHASE_STEP_LABELS = ['🎭', '🔍', '⚖️', '✨', '📝'];
+                        return (
+                            <div key={p}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg transition-all"
+                                style={{
+                                    background: isCurrent ? `${PHASE_COLORS[p]}20` : 'transparent',
+                                    border: isCurrent ? `1px solid ${PHASE_COLORS[p]}50` : '1px solid transparent',
+                                }}
+                                title={`Phase ${p}: ${PHASE_NAMES[p]}`}
+                            >
+                                <span className="text-xs">{PHASE_STEP_LABELS[p]}</span>
+                                {isDone && <span className="text-xs" style={{ color: '#06d6a0' }}>✓</span>}
+                                {isCurrent && (
+                                    <span className="text-xs font-bold hidden lg:block" style={{ color: PHASE_COLORS[p] }}>
+                                        {PHASE_NAMES[p]}
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                {/* 모바일용: 진행도 % */}
+                <div className="md:hidden text-xs font-mono" style={{ color: phaseColor, opacity: 0.7 }}>
+                    {Math.round((phase / 4) * 100)}%
                 </div>
 
                 <div className="flex-1" />
@@ -382,8 +405,8 @@ export default function GameRoom() {
             {/* ── Phase Content ── */}
             <main className="pt-14 min-h-screen">
                 <AnimatePresence mode="wait">
-                    {currentPhase === 0 && <Phase0 key="p0" persona={persona} onPhaseComplete={() => { }} />}
-                    {currentPhase === 1 && <Phase1 key="p1" persona={persona} onPhaseComplete={() => { }} />}
+                    {currentPhase === 0 && <Phase0 key="p0" persona={persona} onPhaseComplete={() => setPhase(1)} />}
+                    {currentPhase === 1 && <Phase1 key="p1" persona={persona} onPhaseComplete={() => setPhase(2)} sessionId={sessionId} studentId={studentProfile?.studentId} />}
                     {currentPhase === 2 && <Phase2 key="p2" persona={persona} npcs={currentGroup?.npcs ?? []} />}
                     {currentPhase === 3 && <Phase3 key="p3" persona={persona} />}
                     {currentPhase === 4 && <Phase4 key="p4" persona={persona} playerName={name} xp={xp} />}

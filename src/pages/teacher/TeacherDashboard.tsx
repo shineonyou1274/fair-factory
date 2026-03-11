@@ -32,6 +32,7 @@ function StatCard({ icon: Icon, label, value, color }: {
 // ── Session Card ──────────────────────────────────────────────
 function SessionCard({ session, onEnter }: { session: ClassSession; onEnter: () => void }) {
     const [copied, setCopied] = useState(false);
+    const [settingsTip, setSettingsTip] = useState(false);
     const phaseNames = ['환상의 장막', '진실의 돋보기', '지혜의 토론', '공정의 설계'];
     const phaseColors = ['#f43f5e', '#f5a623', '#06d6a0', '#a78bfa'];
 
@@ -39,6 +40,11 @@ function SessionCard({ session, onEnter }: { session: ClassSession; onEnter: () 
         navigator.clipboard.writeText(session.classCode);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    }
+
+    function handleSettings() {
+        setSettingsTip(true);
+        setTimeout(() => setSettingsTip(false), 2000);
     }
 
     return (
@@ -117,11 +123,20 @@ function SessionCard({ session, onEnter }: { session: ClassSession; onEnter: () 
                 >
                     수업 대시보드 입장 <ChevronRight size={15} />
                 </button>
-                <button className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-                    aria-label="세션 설정">
-                    <Settings size={15} style={{ color: 'rgba(167,139,250,0.6)' }} />
-                </button>
+                <div className="relative">
+                    <button onClick={handleSettings}
+                        className="w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+                        aria-label="세션 설정">
+                        <Settings size={15} style={{ color: 'rgba(167,139,250,0.6)' }} />
+                    </button>
+                    {settingsTip && (
+                        <div className="absolute bottom-12 right-0 text-xs px-3 py-2 rounded-xl whitespace-nowrap z-10"
+                            style={{ background: '#1a1035', border: '1px solid rgba(124,58,237,0.3)', color: 'rgba(196,181,253,0.7)' }}>
+                            🔧 세션 설정 — 준비 중
+                        </div>
+                    )}
+                </div>
             </div>
         </motion.div>
     );

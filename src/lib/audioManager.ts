@@ -12,7 +12,7 @@ type BGMKey = 'phase0' | 'phase1' | 'phase2' | 'phase3' | 'results' | 'landing';
 type SFXKey = 'buy' | 'xp' | 'phase' | 'seal' | 'click' | 'error';
 
 const BGM_PATHS: Record<BGMKey, string> = {
-    landing: '/audio/bgm_landing.mp3',
+    landing: '/audio/bgm_results.mp3',
     phase0: '/audio/bgm_phase0.mp3',
     phase1: '/audio/bgm_phase1.mp3',
     phase2: '/audio/bgm_phase2.mp3',
@@ -27,7 +27,7 @@ class AudioManager {
     private muted: boolean = false;
     private bgmVolume: number = 0.35;
     private sfxVolume: number = 0.7;
-    private sfxCache: Map<string, HTMLAudioElement> = new Map(); // BGM 캐시용 (SFX는 Web Audio API)
+    // SFX는 Web Audio API 합성 방식 사용 (파일 불필요)
     private userInteracted: boolean = false;
     private pendingBGM: string | null = null;
 

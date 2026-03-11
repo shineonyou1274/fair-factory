@@ -162,53 +162,86 @@ export function XPGainToast({ amount, reason }: { amount: number; reason: string
     );
 }
 
+// ─── 레벨별 테마 ───────────────────────────────────────────────
+const LEVEL_THEMES: Record<number, { particles: string[]; glow: string }> = {
+    1: { particles: ['🌱', '🌿', '☘️'], glow: '#06d6a0' },
+    2: { particles: ['🔍', '💎', '🔷'], glow: '#38bdf8' },
+    3: { particles: ['⚖️', '✨', '💜'], glow: '#a78bfa' },
+    4: { particles: ['🔥', '⚡', '❤️‍🔥'], glow: '#f43f5e' },
+    5: { particles: ['✨', '🌟', '👑'], glow: '#fbbf24' },
+};
+
 // ─── Level Up Modal ───────────────────────────────────────────
 export function LevelUpModal({ newLevel, persona, onClose }: {
     newLevel: typeof XP_LEVELS[0]; persona: Persona; onClose: () => void;
 }) {
     const color = PERSONA_COLORS[persona];
+    const theme = LEVEL_THEMES[newLevel.level] ?? LEVEL_THEMES[5];
+
+    // confetti 파티클 40개 (CSS/Framer Motion 기반, GPU 가속)
+    const confetti = Array.from({ length: 40 }, (_, i) => ({
+        id: i,
+        emoji: theme.particles[i % theme.particles.length],
+        left: `${(i * 2.5 + Math.sin(i) * 15 + 5) % 90}%`,
+        delay: (i * 0.06) % 1.8,
+        duration: 2.2 + (i % 5) * 0.3,
+    }));
+
     return (
         <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center"
-            style={{ background: 'rgba(10,6,24,0.9)' }}
+            className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+            style={{ background: 'rgba(10,6,24,0.92)' }}
             onClick={onClose}
         >
+            {/* confetti 파티클 레이어 */}
+            <div className="absolute inset-0 pointer-events-none">
+                {confetti.map(item => (
+                    <motion.div
+                        key={item.id}
+                        className="absolute text-xl select-none"
+                        style={{ left: item.left, top: -30 }}
+                        animate={{ y: '110vh', opacity: [0, 1, 1, 0], rotate: [0, 180 + item.id * 5] }}
+                        transition={{ duration: item.duration, delay: item.delay, ease: 'easeIn' }}
+                    >
+                        {item.emoji}
+                    </motion.div>
+                ))}
+            </div>
+
+            {/* 중앙 모달 */}
             <motion.div
-                initial={{ scale: 0.5 }} animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 200 }}
-                className="text-center px-8"
+                initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+                className="relative text-center px-8 py-10 rounded-3xl"
+                style={{
+                    background: `radial-gradient(ellipse at 50% 30%, ${theme.glow}18, rgba(10,6,24,0.98))`,
+                    border: `1px solid ${theme.glow}40`,
+                    boxShadow: `0 0 60px ${theme.glow}30`,
+                    maxWidth: 360,
+                }}
+                onClick={e => e.stopPropagation()}
             >
                 <motion.div
-                    animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.15, 1] }}
+                    animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.2, 1] }}
                     transition={{ repeat: 3, duration: 0.4 }}
                     className="text-8xl mb-6"
                 >
                     {newLevel.suffix}
                 </motion.div>
                 <p className="text-base mb-1" style={{ color: 'rgba(196,181,253,0.6)' }}>레벨 업!</p>
-                <h2 className="font-black text-4xl mb-3" style={{ color }}>
+                <h2 className="font-black text-4xl mb-3" style={{ color: theme.glow }}>
                     Lv.{newLevel.level} {newLevel.name}
                 </h2>
                 <p className="text-sm mb-8" style={{ color: 'rgba(196,181,253,0.5)' }}>
                     새로운 칭호를 획득했습니다. 상점에서 특별 아이템을 확인하세요!
                 </p>
-                {/* Sparkle ring */}
-                {Array.from({ length: 8 }).map((_, i) => (
-                    <motion.div key={i}
-                        className="absolute text-2xl"
-                        style={{ left: `${30 + Math.cos(i / 8 * Math.PI * 2) * 120}px`, top: `${50 + Math.sin(i / 8 * Math.PI * 2) * 80}px` }}
-                        animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
-                        transition={{ repeat: Infinity, duration: 1.5, delay: i * 0.2 }}
-                    >
-                        ✨
-                    </motion.div>
-                ))}
                 <motion.button
-                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.06, boxShadow: `0 0 40px ${theme.glow}70` }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={onClose}
                     className="px-8 py-4 rounded-2xl font-black text-lg text-white"
-                    style={{ background: `linear-gradient(135deg, ${color}, ${color}bb)`, boxShadow: `0 0 30px ${color}50` }}
+                    style={{ background: `linear-gradient(135deg, ${theme.glow}, ${color})`, boxShadow: `0 0 25px ${theme.glow}50` }}
                 >
                     계속하기 →
                 </motion.button>

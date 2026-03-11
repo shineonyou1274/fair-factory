@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, CheckCircle, Send, FileText } from 'lucide-react';
 
-interface Props { persona: string; onPhaseComplete: () => void; }
+interface Props { persona: string; onPhaseComplete: () => void; sessionId?: string; studentId?: string; }
 
 // ─── Hidden Truth Items ───────────────────────────────────────
 const HIDDEN_TRUTHS = [
@@ -139,12 +139,11 @@ function ReportForm({
 }
 
 // ─── Phase 1 Main ─────────────────────────────────────────────
-export default function Phase1({ persona, onPhaseComplete }: Props) {
+export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props) {
     const [scratchProgress, setScratchProgress] = useState(0);
     const [foundTruths, setFoundTruths] = useState<Set<string>>(new Set());
     const [activeTruth, setActiveTruth] = useState<typeof HIDDEN_TRUTHS[0] | null>(null);
     const [submitted, setSubmitted] = useState(false);
-    const [report, setReport] = useState('');
 
     const CANVAS_W = 560;
     const CANVAS_H = 360;
@@ -161,8 +160,13 @@ export default function Phase1({ persona, onPhaseComplete }: Props) {
     }, [scratchProgress]);
 
     function handleSubmit(analysis: string) {
-        setReport(analysis);
         setSubmitted(true);
+        // Firebase에 리포트 전송 (교사 대시보드에서 확인 가능)
+        if (sessionId && studentId) {
+            import('@/lib/firebaseService').then(({ StudentService }) => {
+                StudentService.submitReport(sessionId, studentId, analysis).catch(() => {});
+            });
+        }
     }
 
     const foundList = HIDDEN_TRUTHS.filter(t => foundTruths.has(t.id));
@@ -227,8 +231,8 @@ export default function Phase1({ persona, onPhaseComplete }: Props) {
             <div className="flex items-center gap-4 mb-6 max-w-xl mx-auto">
                 <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                     <motion.div className="h-full rounded-full"
-                        style={{ background: 'linear-gradient(90deg, #7c3aed, #f5a623)', width: `${scratchProgress}%` }}
-                        transition={{ duration: 0.3 }} />
+                        style={{ background: 'linear-gradient(90deg, #7c3aed, #f5a623)', width: `${(foundList.length / HIDDEN_TRUTHS.length) * 100}%` }}
+                        transition={{ duration: 0.5 }} />
                 </div>
                 <span className="text-xs font-bold flex-shrink-0" style={{ color: '#fbbf24' }}>
                     {foundList.length}/{HIDDEN_TRUTHS.length} 발견

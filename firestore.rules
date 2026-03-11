@@ -32,6 +32,12 @@ service cloud.firestore {
       allow create: if isTeacher();
       allow update: if isTeacher() && resource.data.teacherId == request.auth.uid;
       allow delete: if isSuperAdmin();
+
+      // 세션 내 학생 서브컬렉션 — 교사만 전체 읽기, 본인만 쓰기
+      match /students/{studentId} {
+        allow read: if isTeacher();
+        allow write: if isOwner(studentId) || isTeacher();
+      }
     }
 
     // ─── 모둠 컬렉션 ─────────────────────────────────────────

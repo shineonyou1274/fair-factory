@@ -39,18 +39,23 @@ interface SessionState {
     currentSession: ClassSession | null;
     currentGroup: Group | null;
     currentPhase: Phase;
+    /** Phase 0에서 학생의 광고 구매 선택 (true=구매, false=거부, null=미선택) */
+    phase0Choice: boolean | null;
     setSession: (session: ClassSession | null) => void;
     setGroup: (group: Group | null) => void;
     setPhase: (phase: Phase) => void;
+    setPhase0Choice: (choice: boolean) => void;
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
     currentSession: null,
     currentGroup: null,
     currentPhase: 0,
+    phase0Choice: null,
     setSession: (currentSession) => set({ currentSession }),
     setGroup: (currentGroup) => set({ currentGroup }),
     setPhase: (currentPhase) => set({ currentPhase }),
+    setPhase0Choice: (choice) => set({ phase0Choice: choice }),
 }));
 
 // ─── UI Store ──────────────────────────────────────────────────

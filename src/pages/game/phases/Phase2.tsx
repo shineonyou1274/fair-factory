@@ -1,7 +1,10 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Zap, CheckCircle, Lock } from 'lucide-react';
+import { Send, Zap, CheckCircle, Lock, Timer } from 'lucide-react';
 import type { NpcCharacter } from '@/types';
+
+const MAX_ROUNDS = 5;      // NPC당 최대 발언 횟수
+const TIMER_SECONDS = 60;  // NPC당 대화 제한 시간(초)
 
 interface Props { persona: string; npcs: NpcCharacter[]; }
 
@@ -96,10 +99,13 @@ function NpcSelector({ npcs, selected, onSelect }: { npcs: NpcCharacter[]; selec
                         }}>
                         <div className="relative">
                             <img src={NPC_IMG[npc.id]} alt={npc.name}
-                                className="w-10 h-10 rounded-full object-cover"
-                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                className="w-10 h-10 rounded-full object-cover relative z-10"
+                                onError={e => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('hidden');
+                                }}
                             />
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl absolute inset-0"
+                            <div hidden className="w-10 h-10 rounded-full flex items-center justify-center text-xl absolute inset-0"
                                 style={{ background: 'rgba(255,255,255,0.05)' }}>
                                 {npc.emoji}
                             </div>
@@ -124,28 +130,72 @@ function NpcSelector({ npcs, selected, onSelect }: { npcs: NpcCharacter[]; selec
 
 // ─── Phase 2 Main ─────────────────────────────────────────────
 export default function Phase2({ persona, npcs: initNpcs }: Props) {
-    const [npcs, setNpcs] = useState(initNpcs.length ? initNpcs : [
-        { id: 'gorex', name: '고렉스', role: '대형 유통업자', emoji: '😈', hiddenAgenda: '', weakness: '', trustLevel: 20, isPersuaded: false } as NpcCharacter,
-        { id: 'tierra', name: '티에라', role: '소규모 농장주', emoji: '😔', hiddenAgenda: '', weakness: '', trustLevel: 40, isPersuaded: false } as NpcCharacter,
-        { id: 'maxwell', name: '맥스웰', role: '다국적 기업 임원', emoji: '🏢', hiddenAgenda: '', weakness: '', trustLevel: 15, isPersuaded: false } as NpcCharacter,
-        { id: 'amara', name: '아마라', role: '현지 협동조합장', emoji: '🌱', hiddenAgenda: '', weakness: '', trustLevel: 65, isPersuaded: false } as NpcCharacter,
-        { id: 'kim', name: '김현주', role: '소비자 대표', emoji: '🛒', hiddenAgenda: '', weakness: '', trustLevel: 35, isPersuaded: false } as NpcCharacter,
-    ]);
+    const defaultNpcs: NpcCharacter[] = [
+        { id: 'gorex',   name: '고렉스', role: '대형 유통업자',     emoji: '😈', hiddenAgenda: '', weakness: '', trustLevel: 20, isPersuaded: false },
+        { id: 'tierra',  name: '티에라', role: '소규모 농장주',     emoji: '😔', hiddenAgenda: '', weakness: '', trustLevel: 40, isPersuaded: false },
+        { id: 'maxwell', name: '맥스웰', role: '다국적 기업 임원',  emoji: '🏢', hiddenAgenda: '', weakness: '', trustLevel: 15, isPersuaded: false },
+        { id: 'amara',   name: '아마라', role: '현지 협동조합장',   emoji: '🌱', hiddenAgenda: '', weakness: '', trustLevel: 65, isPersuaded: false },
+        { id: 'kim',     name: '김현주', role: '소비자 대표',       emoji: '🛒', hiddenAgenda: '', weakness: '', trustLevel: 35, isPersuaded: false },
+    ];
+    const [npcs, setNpcs] = useState<NpcCharacter[]>(initNpcs.length ? initNpcs : defaultNpcs);
     const [selectedNpc, setSelectedNpc] = useState<string>(npcs[0]?.id ?? 'gorex');
     const [messages, setMessages] = useState<Record<string, any[]>>({});
     const [input, setInput] = useState('');
     const [actionUsed, setActionUsed] = useState(false);
     const [sending, setSending] = useState(false);
+    // 라운드 제한: NPC별 남은 발언 횟수
+    const [npcRounds, setNpcRounds] = useState<Record<string, number>>(
+        () => Object.fromEntries((initNpcs.length ? initNpcs : defaultNpcs).map(n => [n.id, MAX_ROUNDS]))
+    );
+    // 타이머
+    const [timer, setTimer] = useState(TIMER_SECONDS);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
     const npc = npcs.find(n => n.id === selectedNpc)!;
     const chatHistory = messages[selectedNpc] ?? [];
     const action = ACTION_CARDS[persona];
     const persuadeCount = npcs.filter(n => n.isPersuaded).length;
+    const roundsLeft = npcRounds[selectedNpc] ?? 0;
+    const isExhausted = roundsLeft <= 0 && !npc?.isPersuaded;
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatHistory]);
+
+    // NPC 전환 시 타이머 리셋
+    const handleTimerExpired = useCallback(() => {
+        const notPersuaded = npcs.filter(n => !n.isPersuaded && n.id !== selectedNpc);
+        if (notPersuaded.length > 0) {
+            setMessages(prev => ({
+                ...prev,
+                [selectedNpc]: [
+                    ...(prev[selectedNpc] ?? []),
+                    { role: 'npc', text: '⏰ 시간이 초과됐습니다. 다음 대화 상대로 이동합니다.', npcName: '시스템', npcEmoji: '⏰', color: '#f43f5e', timestamp: Date.now() },
+                ],
+            }));
+            setTimeout(() => setSelectedNpc(notPersuaded[0].id), 1200);
+        }
+    }, [npcs, selectedNpc]);
+
+    useEffect(() => {
+        setTimer(TIMER_SECONDS);
+        if (timerRef.current) clearInterval(timerRef.current);
+        if (isExhausted || npc?.isPersuaded) return;
+
+        timerRef.current = setInterval(() => {
+            setTimer(prev => {
+                if (prev <= 1) {
+                    clearInterval(timerRef.current!);
+                    handleTimerExpired();
+                    return TIMER_SECONDS;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    }, [selectedNpc]);
 
     // Init NPC greeting
     useEffect(() => {
@@ -173,16 +223,36 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     }
 
     async function sendMessage(text: string) {
-        if (!text.trim() || sending) return;
+        if (!text.trim() || sending || roundsLeft <= 0) return;
         setSending(true);
+        const currentHistory = messages[selectedNpc] ?? [];
         const userMsg = { role: 'user' as const, text, persona, timestamp: Date.now() };
-        setMessages(prev => ({ ...prev, [selectedNpc]: [...(prev[selectedNpc] ?? []), userMsg] }));
+        setMessages(prev => ({ ...prev, [selectedNpc]: [...currentHistory, userMsg] }));
         setInput('');
+        // 라운드 차감
+        setNpcRounds(prev => ({ ...prev, [selectedNpc]: (prev[selectedNpc] ?? MAX_ROUNDS) - 1 }));
 
-        // Simulate AI thinking
-        await new Promise(r => setTimeout(r, 900 + Math.random() * 600));
+        let response: string;
+        try {
+            // Claude API 프록시 호출
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    npcId: selectedNpc,
+                    userMessage: text,
+                    persona,
+                    chatHistory: currentHistory.slice(-6).map((m: any) => ({ role: m.role === 'user' ? 'user' : 'assistant', text: m.text })),
+                }),
+            });
+            const data = await res.json();
+            response = data.text ?? generateNpcResponse(npc, text, persona);
+        } catch {
+            // 네트워크 오류 시 로컬 폴백
+            await new Promise(r => setTimeout(r, 800 + Math.random() * 500));
+            response = generateNpcResponse(npc, text, persona);
+        }
 
-        const response = generateNpcResponse(npc, text, persona);
         const delta = text.length > 30 ? 8 : text.length > 15 ? 4 : 2;
         updateNpcTrust(selectedNpc, delta);
 
@@ -229,7 +299,21 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                             <span className="font-bold text-white">{npc.emoji} {npc.name}</span>
                             <span className="ml-2" style={{ color: 'rgba(167,139,250,0.5)' }}>{npc.role}</span>
                         </div>
-                        <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+                        <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+                            {/* 타이머 */}
+                            {!npc.isPersuaded && !isExhausted && (
+                                <div className="flex items-center gap-1 text-xs font-mono"
+                                    style={{ color: timer <= 10 ? '#f43f5e' : 'rgba(196,181,253,0.5)' }}>
+                                    <Timer size={11} />
+                                    {String(timer).padStart(2, '0')}s
+                                </div>
+                            )}
+                            {/* 라운드 카운터 */}
+                            {!npc.isPersuaded && (
+                                <div className="text-xs" style={{ color: roundsLeft <= 1 ? '#f43f5e' : 'rgba(196,181,253,0.4)' }}>
+                                    {roundsLeft}/{MAX_ROUNDS} 라운드
+                                </div>
+                            )}
                             <span style={{ color: npc.isPersuaded ? '#06d6a0' : '#fbbf24' }}>
                                 {npc.isPersuaded ? '✅ 설득 완료' : `신뢰도 ${npc.trustLevel}%`}
                             </span>
@@ -285,23 +369,32 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                 {actionUsed && <span className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>사용 완료 (1회/세션)</span>}
             </div>
 
+            {/* 라운드 소진 안내 */}
+            {isExhausted && (
+                <div className="mb-2 px-4 py-2 rounded-xl text-xs text-center"
+                    style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e' }}>
+                    ⚠️ 이 NPC와의 라운드가 종료됐습니다. 다른 NPC와 대화하세요.
+                </div>
+            )}
+
             {/* Input */}
             <div className="flex gap-3">
                 <input
                     value={input}
                     onChange={e => setInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage(input))}
-                    placeholder={`${npc?.name}에게 메시지 보내기... (Enter로 전송)`}
-                    className="flex-1 px-4 py-3 rounded-xl text-sm outline-none transition-all"
+                    placeholder={isExhausted ? '라운드 종료 — 다른 NPC를 선택하세요' : `${npc?.name}에게 메시지 보내기... (Enter로 전송)`}
+                    disabled={isExhausted || npc?.isPersuaded}
+                    className="flex-1 px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', color: '#f0f0f5' }}
-                    onFocus={e => { e.currentTarget.style.borderColor = 'rgba(124,58,237,0.6)'; }}
+                    onFocus={e => { if (!isExhausted) e.currentTarget.style.borderColor = 'rgba(124,58,237,0.6)'; }}
                     onBlur={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'; }}
                     aria-label="NPC에게 메시지 입력"
                 />
                 <motion.button
                     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     onClick={() => sendMessage(input)}
-                    disabled={!input.trim() || sending}
+                    disabled={!input.trim() || sending || isExhausted || npc?.isPersuaded}
                     className="w-12 h-12 rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
                     style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}
                     aria-label="메시지 전송"

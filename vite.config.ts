@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     tailwindcss(),
@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: '공정공장 공정가들',
+        name: 'Fair Factory Friends',
         short_name: '공정공장',
         description: '사회정서학습과 경제 원리를 결합한 공정무역 에듀테크 플랫폼',
         theme_color: '#1a1a2e',
@@ -33,4 +33,8 @@ export default defineConfig({
   resolve: {
     alias: { '@': '/src' },
   },
-})
+  // 프로덕션 빌드에서 console.log, debugger 제거 → F12 정보 노출 방지
+  esbuild: {
+    drop: mode === 'production' ? (['console', 'debugger'] as const) : [],
+  },
+}))

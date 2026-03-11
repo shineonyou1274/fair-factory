@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, AlertCircle } from 'lucide-react';
+import { useSessionStore } from '@/store';
 
 interface Props {
     persona: string;
@@ -98,9 +99,11 @@ function FakeAd({ onChoice }: { onChoice: (bought: boolean) => void }) {
 export default function Phase0({ persona, onPhaseComplete }: Props) {
     const [stage, setStage] = useState<'intro' | 'ad' | 'reaction'>('intro');
     const [bought, setBought] = useState<boolean | null>(null);
+    const setPhase0Choice = useSessionStore(s => s.setPhase0Choice);
 
     function handleChoice(didBuy: boolean) {
         setBought(didBuy);
+        setPhase0Choice(didBuy);  // Phase 3 슬라이더 초기값에 반영
         setStage('reaction');
     }
 

@@ -5,7 +5,7 @@ import { useUIStore } from '@/store';
 
 export interface Notification {
     id: string;
-    type: 'phase_change' | 'xp_gain' | 'golden_seal' | 'team_submit' | 'npc_persuaded' | 'system';
+    type: 'phase_change' | 'xp_gain' | 'golden_seal' | 'team_submit' | 'npc_persuaded' | 'system' | 'report_reviewed' | 'quiz';
     title: string;
     message: string;
     timestamp: number;
@@ -14,12 +14,14 @@ export interface Notification {
 }
 
 const TYPE_CONFIG: Record<Notification['type'], { icon: React.ElementType; color: string; bg: string }> = {
-    phase_change: { icon: ArrowRight, color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
-    xp_gain: { icon: Zap, color: '#fbbf24', bg: 'rgba(251,191,36,0.1)' },
-    golden_seal: { icon: Award, color: '#f5a623', bg: 'rgba(245,166,35,0.12)' },
-    team_submit: { icon: Users, color: '#06d6a0', bg: 'rgba(6,214,160,0.10)' },
-    npc_persuaded: { icon: CheckCircle, color: '#38bdf8', bg: 'rgba(56,189,248,0.10)' },
-    system: { icon: Bell, color: '#f43f5e', bg: 'rgba(244,63,94,0.10)' },
+    phase_change:    { icon: ArrowRight,   color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
+    xp_gain:         { icon: Zap,          color: '#fbbf24', bg: 'rgba(251,191,36,0.1)'   },
+    golden_seal:     { icon: Award,        color: '#f5a623', bg: 'rgba(245,166,35,0.12)'  },
+    team_submit:     { icon: Users,        color: '#06d6a0', bg: 'rgba(6,214,160,0.10)'   },
+    npc_persuaded:   { icon: CheckCircle,  color: '#38bdf8', bg: 'rgba(56,189,248,0.10)'  },
+    system:          { icon: Bell,         color: '#f43f5e', bg: 'rgba(244,63,94,0.10)'   },
+    report_reviewed: { icon: CheckCircle,  color: '#06d6a0', bg: 'rgba(6,214,160,0.10)'   },
+    quiz:            { icon: Zap,          color: '#a78bfa', bg: 'rgba(167,139,250,0.12)' },
 };
 
 function timeAgo(ts: number) {

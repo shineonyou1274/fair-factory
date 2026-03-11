@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Info, TrendingUp, Check } from 'lucide-react';
+import { useSessionStore } from '@/store';
 
 interface Props { persona: string; }
 
@@ -13,6 +14,21 @@ interface Margins {
 }
 
 const FAIR_TRADE_MIN = 2800;  // 공정무역 최저 보장가 (원)
+
+// 신호등 3단계 판정
+type FairLevel = 'unfair' | 'partial' | 'fair';
+
+function getFairLevel(price: number, farmerShare: number): FairLevel {
+    if (price >= FAIR_TRADE_MIN && farmerShare >= 15) return 'fair';
+    if (price >= FAIR_TRADE_MIN * 0.85 || farmerShare >= 10) return 'partial';
+    return 'unfair';
+}
+
+const FAIR_LEVEL_CONFIG: Record<FairLevel, { emoji: string; label: string; color: string; bg: string; border: string }> = {
+    fair:    { emoji: '🟢', label: '공정 가격',  color: '#06d6a0', bg: 'rgba(6,214,160,0.1)',   border: 'rgba(6,214,160,0.4)' },
+    partial: { emoji: '🟡', label: '개선 필요',  color: '#f5a623', bg: 'rgba(245,166,35,0.1)',  border: 'rgba(245,166,35,0.4)' },
+    unfair:  { emoji: '🔴', label: '불공정',     color: '#f43f5e', bg: 'rgba(244,63,94,0.08)',  border: 'rgba(244,63,94,0.3)' },
+};
 
 function calcPrice(m: Margins) {
     const base = m.farmCost * (1 + m.farmerMargin / 100);
@@ -108,11 +124,17 @@ function DistBar({ shares }: { shares: ReturnType<typeof calcShares> }) {
 
 // ─── Phase 3 Main ─────────────────────────────────────────────
 export default function Phase3({ persona }: Props) {
+    const phase0Choice = useSessionStore(s => s.phase0Choice);
+
+    // Phase 0에서 광고를 구매했으면 유통 마진을 높게 설정 → 문제 인식 유도
+    // 거부했으면 낮게 → 다른 구조적 원인 탐색 유도
+    const initialDistMargin = phase0Choice === true ? 50 : phase0Choice === false ? 30 : 40;
+
     const [margins, setMargins] = useState<Margins>({
         farmCost: 600,
         farmerMargin: 10,
         coopMargin: 8,
-        distMargin: 40,
+        distMargin: initialDistMargin,
         retailMargin: 25,
     });
     const [submitted, setSubmitted] = useState(false);
@@ -120,7 +142,9 @@ export default function Phase3({ persona }: Props) {
 
     const finalPrice = calcPrice(margins);
     const shares = calcShares(margins, finalPrice);
-    const isFair = finalPrice >= FAIR_TRADE_MIN && shares.farmerGet >= 15;
+    const fairLevel = getFairLevel(finalPrice, shares.farmerGet);
+    const levelCfg = FAIR_LEVEL_CONFIG[fairLevel];
+    const isFair = fairLevel === 'fair';
     const fairScore = Math.min(100, Math.round(
         (Math.min(finalPrice, FAIR_TRADE_MIN * 1.5) / (FAIR_TRADE_MIN * 1.5)) * 50 +
         (Math.min(shares.farmerGet, 30) / 30) * 50
@@ -148,6 +172,12 @@ export default function Phase3({ persona }: Props) {
                 <p style={{ color: 'rgba(196,181,253,0.6)' }}>
                     슬라이더를 조작하여 모두가 납득할 수 있는 가격 구조를 만드세요
                 </p>
+                {phase0Choice !== null && (
+                    <div className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full text-xs"
+                        style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: 'rgba(196,181,253,0.7)' }}>
+                        {phase0Choice ? '💸 Phase 0에서 광고에 구매했군요 — 유통 마진이 높게 설정됐어요!' : '🤔 Phase 0에서 의심했군요 — 구조적 원인을 탐색해보세요!'}
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -200,13 +230,15 @@ export default function Phase3({ persona }: Props) {
 
                 {/* ── Right: Result ── */}
                 <div className="space-y-5">
-                    {/* Price Display */}
+                    {/* Price Display — 신호등 3단계 */}
                     <motion.div
                         className="rounded-2xl p-6 text-center"
-                        style={{
-                            background: isFair ? 'rgba(6,214,160,0.1)' : 'rgba(244,63,94,0.08)',
-                            border: `2px solid ${isFair ? 'rgba(6,214,160,0.4)' : 'rgba(244,63,94,0.3)'}`,
+                        animate={{
+                            background: levelCfg.bg,
+                            borderColor: levelCfg.border,
                         }}
+                        style={{ border: `2px solid ${levelCfg.border}` }}
+                        transition={{ duration: 0.4 }}
                     >
                         <div className="text-xs font-bold mb-1 uppercase tracking-wider"
                             style={{ color: 'rgba(196,181,253,0.5)' }}>최종 소비자가</div>
@@ -215,16 +247,21 @@ export default function Phase3({ persona }: Props) {
                             initial={{ scale: 1.2 }}
                             animate={{ scale: 1 }}
                             className="text-5xl font-black mb-2"
-                            style={{ color: isFair ? '#06d6a0' : '#f43f5e' }}
+                            style={{ color: levelCfg.color }}
                         >
                             ₩{finalPrice.toLocaleString()}
                         </motion.div>
-                        <div className="flex items-center justify-center gap-3 text-sm">
+                        <div className="flex items-center justify-center gap-3 text-sm flex-wrap">
                             <span style={{ color: 'rgba(196,181,253,0.5)' }}>공정무역 최저가: ₩{FAIR_TRADE_MIN.toLocaleString()}</span>
-                            {isFair
-                                ? <span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: 'rgba(6,214,160,0.2)', color: '#06d6a0' }}>✓ 공정 가격</span>
-                                : <span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: 'rgba(244,63,94,0.2)', color: '#f43f5e' }}>✗ 미달</span>
-                            }
+                            <motion.span
+                                key={fairLevel}
+                                initial={{ scale: 0.8, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                className="px-3 py-1 rounded-full text-xs font-black"
+                                style={{ background: `${levelCfg.color}25`, color: levelCfg.color, border: `1px solid ${levelCfg.color}50` }}
+                            >
+                                {levelCfg.emoji} {levelCfg.label}
+                            </motion.span>
                         </div>
                     </motion.div>
 
@@ -255,13 +292,28 @@ export default function Phase3({ persona }: Props) {
                         <DistBar shares={shares} />
                     </div>
 
-                    {/* Farmer Income */}
+                    {/* Farmer Income — 바 차트 포함 */}
                     <div className="rounded-2xl p-4"
                         style={{ background: 'rgba(6,214,160,0.06)', border: '1px solid rgba(6,214,160,0.2)' }}>
                         <div className="text-xs mb-1" style={{ color: 'rgba(6,214,160,0.7)' }}>농장주 실수령액 (per 초콜릿)</div>
                         <div className="text-2xl font-black" style={{ color: '#06d6a0' }}>
                             ₩{Math.round(margins.farmCost * (margins.farmerMargin / 100)).toLocaleString()}
                             <span className="text-sm font-normal ml-2" style={{ color: 'rgba(6,214,160,0.6)' }}>({Math.round(shares.farmerGet)}%)</span>
+                        </div>
+                        {/* 농장주 몫 진행 바 */}
+                        <div className="mt-3 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                            <motion.div
+                                className="h-full rounded-full"
+                                animate={{ width: `${Math.min(100, (shares.farmerGet / 30) * 100)}%` }}
+                                style={{ background: shares.farmerGet >= 15 ? 'linear-gradient(90deg,#06d6a0,#38bdf8)' : 'linear-gradient(90deg,#f43f5e,#f97316)' }}
+                                transition={{ duration: 0.5 }}
+                            />
+                        </div>
+                        <div className="flex justify-between text-xs mt-1" style={{ color: 'rgba(6,214,160,0.5)' }}>
+                            <span>목표: 15% 이상</span>
+                            <span style={{ color: shares.farmerGet >= 15 ? '#06d6a0' : '#f43f5e', fontWeight: 'bold' }}>
+                                현재: {Math.round(shares.farmerGet)}%{shares.farmerGet >= 15 ? ' ✓' : ' ✗'}
+                            </span>
                         </div>
                     </div>
 

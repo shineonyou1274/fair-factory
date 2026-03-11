@@ -1,7 +1,9 @@
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { GraduationCap, Sparkles, ChevronRight, Globe, ChevronDown, Link2, Scale, Swords } from 'lucide-react';
 import { useUIStore } from '@/store';
+import { audioManager } from '@/lib/audioManager';
 
 // ─── Chain Link Decoration ────────────────────────────────────
 function ChainLinks({ className }: { className?: string }) {
@@ -118,6 +120,12 @@ export default function LandingPage() {
     const { setLanguage, language } = useUIStore();
     const { scrollY } = useScroll();
 
+    // Landing BGM — 첫 인터랙션 후 자동 재생
+    useEffect(() => {
+        audioManager.playBGM('landing');
+        return () => audioManager.stopBGM();
+    }, []);
+
     // Parallax - castle image scrolls slower than content
     const castleY = useTransform(scrollY, [0, 600], [0, 120]);
     const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
@@ -166,12 +174,14 @@ export default function LandingPage() {
                         </button>
                         <button
                             onClick={() => navigate('/teacher/login')}
+                            aria-label="교사 로그인 - Game Master로 수업 진행하기"
                             className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-purple-200 hover:text-white border border-purple-500/30 hover:border-purple-400/60 hover:bg-purple-500/10 transition-all"
                         >
                             <GraduationCap size={15} /> 교사 로그인
                         </button>
                         <button
                             onClick={() => navigate('/join')}
+                            aria-label="학생으로 게임 참여하기"
                             className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white transition-all"
                             style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}
                         >
@@ -257,36 +267,56 @@ export default function LandingPage() {
                         initial={{ opacity: 0, y: 40 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.9, delay: 0.1 }}
-                        className="font-black leading-tight mb-4"
-                        style={{ fontSize: 'clamp(2.8rem, 8vw, 5.5rem)' }}
+                        className="font-black leading-tight mb-3"
+                        style={{ fontSize: 'clamp(2.2rem, 7vw, 4.8rem)' }}
                     >
                         <span style={{
                             background: 'linear-gradient(135deg, #ffffff 0%, #ddd6fe 40%, #c4b5fd 70%, #a78bfa 100%)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent',
                             backgroundClip: 'text',
+                            letterSpacing: '-0.02em',
                         }}>
-                            공정공장
-                        </span>
-                        <br />
-                        <span style={{
-                            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text',
-                            fontSize: '0.75em',
-                        }}>
-                            공정가들
+                            Fair Factory Friends
                         </span>
                     </motion.h1>
+
+                    {/* Korean subtitle with separator */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.7, delay: 0.2 }}
+                        className="flex items-center justify-center gap-3 mb-3"
+                    >
+                        <div className="h-px w-8 opacity-30" style={{ background: '#fbbf24' }} />
+                        <span
+                            className="font-black tracking-widest"
+                            style={{
+                                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                backgroundClip: 'text',
+                                fontSize: 'clamp(1.1rem, 3.5vw, 2rem)',
+                            }}
+                        >
+                            공정공장 공정가들
+                        </span>
+                        <div className="h-px w-8 opacity-30" style={{ background: '#fbbf24' }} />
+                    </motion.div>
 
                     <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ duration: 0.6, delay: 0.25 }}
-                        className="text-purple-300/60 text-sm mb-6 tracking-[0.25em] uppercase"
+                        transition={{ duration: 0.6, delay: 0.3 }}
+                        className="text-sm mb-6 tracking-[0.4em] uppercase font-semibold"
+                        style={{
+                            background: 'linear-gradient(135deg, #06d6a0, #38bdf8)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                        }}
                     >
-                        The Justice Architects
+                        Just fair
                     </motion.p>
 
                     {/* Description */}
@@ -312,6 +342,7 @@ export default function LandingPage() {
                     >
                         <button
                             onClick={() => navigate('/join')}
+                            aria-label="학생으로 게임 참여하기 - 공정가로 합류"
                             className="group flex items-center gap-3 px-10 py-4 rounded-2xl font-black text-lg text-white w-full sm:w-auto justify-center transition-all duration-300"
                             style={{
                                 background: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
@@ -327,11 +358,12 @@ export default function LandingPage() {
                             }}
                         >
                             <Sparkles size={20} />
-                            공정가로 합류하기
+                            30분으로 세상을 바꾸는 수업 시작하기
                             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                         </button>
                         <button
                             onClick={() => navigate('/teacher/login')}
+                            aria-label="교사 로그인 - Game Master로 수업 진행하기"
                             className="flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-base w-full sm:w-auto justify-center transition-all duration-300"
                             style={{
                                 background: 'rgba(245,162,35,0.12)',
@@ -583,6 +615,7 @@ export default function LandingPage() {
                     </p>
                     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                         <button onClick={() => navigate('/join')}
+                            aria-label="지금 게임 참여하기 - 공정가로 시작"
                             className="flex items-center gap-3 px-12 py-5 rounded-2xl font-black text-xl text-white transition-all duration-300 w-full sm:w-auto justify-center"
                             style={{
                                 background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
@@ -612,7 +645,7 @@ export default function LandingPage() {
                 className="py-8 px-6 text-center text-xs"
                 style={{ borderTop: '1px solid rgba(109,40,217,0.2)', color: 'rgba(139,92,246,0.4)' }}
             >
-                <p>© 2026 공정공장 공정가들 — The Justice Architects</p>
+                <p>© 2026 Fair Factory Friends — 공정공장 공정가들 · Just fair</p>
                 <p className="mt-1 opacity-60">사회정서학습(SEL) + 공정무역 에듀테크 플랫폼</p>
             </footer>
         </div>
