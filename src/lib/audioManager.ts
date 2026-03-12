@@ -9,7 +9,7 @@
  */
 
 type BGMKey = 'phase0' | 'phase1' | 'phase2' | 'phase3' | 'results' | 'landing';
-type SFXKey = 'buy' | 'xp' | 'phase' | 'seal' | 'click' | 'error';
+type SFXKey = 'buy' | 'xp' | 'phase' | 'seal' | 'click' | 'error' | 'crystal' | 'reveal' | 'whoosh';
 
 const BGM_PATHS: Record<BGMKey, string> = {
     landing: '/audio/bgm_results.mp3',
@@ -124,6 +124,9 @@ class AudioManager {
                 case 'phase': this._synthPhase(vol); break;
                 case 'seal': this._synthSeal(vol); break;
                 case 'error': this._synthError(vol); break;
+                case 'crystal': this._synthCrystal(vol); break;
+                case 'reveal': this._synthReveal(vol); break;
+                case 'whoosh': this._synthWhoosh(vol); break;
             }
         } catch { /* 오디오 비활성화 환경 무시 */ }
     }
@@ -254,6 +257,95 @@ class AudioManager {
         });
     }
 
+
+    // 🔮 수정구슬 — 신비로운 상승 톤 + 반짝임
+    private _synthCrystal(vol: number) {
+        const now = this.ctx.currentTime;
+        // 낮은 패드음 (신비로운 느낌)
+        const pad = this.ctx.createOscillator();
+        const padG = this.ctx.createGain();
+        pad.connect(padG); padG.connect(this.ctx.destination);
+        pad.type = 'sine';
+        pad.frequency.setValueAtTime(220, now);
+        pad.frequency.exponentialRampToValueAtTime(440, now + 1.5);
+        padG.gain.setValueAtTime(0, now);
+        padG.gain.linearRampToValueAtTime(vol * 0.25, now + 0.3);
+        padG.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+        pad.start(now); pad.stop(now + 1.6);
+        // 반짝이는 높은 음 (글리산도)
+        [523, 659, 784, 988, 1175].forEach((freq, i) => {
+            const delay = i * 0.15;
+            const g = this.ctx.createGain();
+            g.connect(this.ctx.destination);
+            g.gain.setValueAtTime(0, now + delay);
+            g.gain.linearRampToValueAtTime(vol * 0.2, now + delay + 0.03);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.4);
+            const o = this.ctx.createOscillator();
+            o.connect(g); o.type = 'triangle';
+            o.frequency.setValueAtTime(freq, now + delay);
+            o.start(now + delay); o.stop(now + delay + 0.45);
+        });
+    }
+
+    // ✨ 캐릭터 공개 — 화려한 팡파르 + 임팩트
+    private _synthReveal(vol: number) {
+        const now = this.ctx.currentTime;
+        // 임팩트 저음
+        const bass = this.ctx.createOscillator();
+        const bassG = this.ctx.createGain();
+        bass.connect(bassG); bassG.connect(this.ctx.destination);
+        bass.type = 'sine';
+        bass.frequency.setValueAtTime(80, now);
+        bass.frequency.exponentialRampToValueAtTime(60, now + 0.5);
+        bassG.gain.setValueAtTime(vol * 0.6, now);
+        bassG.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+        bass.start(now); bass.stop(now + 0.55);
+        // 상승 팡파르 (도-미-솔-도-미)
+        [523, 659, 784, 1047, 1319].forEach((freq, i) => {
+            const delay = 0.05 + i * 0.1;
+            const g = this.ctx.createGain();
+            g.connect(this.ctx.destination);
+            g.gain.setValueAtTime(0, now + delay);
+            g.gain.linearRampToValueAtTime(vol * 0.45, now + delay + 0.04);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.6);
+            const o = this.ctx.createOscillator();
+            o.connect(g); o.type = i < 3 ? 'sine' : 'triangle';
+            o.frequency.setValueAtTime(freq, now + delay);
+            o.start(now + delay); o.stop(now + delay + 0.65);
+        });
+        // 서스테인 코드
+        [1047, 1319].forEach(freq => {
+            const g = this.ctx.createGain();
+            g.connect(this.ctx.destination);
+            g.gain.setValueAtTime(0, now + 0.6);
+            g.gain.linearRampToValueAtTime(vol * 0.35, now + 0.65);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+            const o = this.ctx.createOscillator();
+            o.connect(g); o.type = 'sine';
+            o.frequency.setValueAtTime(freq, now + 0.6);
+            o.start(now + 0.6); o.stop(now + 1.9);
+        });
+    }
+
+    // 💨 워시 — 카드 셔플/전환 효과
+    private _synthWhoosh(vol: number) {
+        const now = this.ctx.currentTime;
+        const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 0.25, this.ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.2;
+        const src = this.ctx.createBufferSource();
+        src.buffer = buf;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(400, now);
+        filter.frequency.exponentialRampToValueAtTime(2000, now + 0.15);
+        filter.Q.value = 2;
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(vol * 0.4, now);
+        g.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+        src.connect(filter); filter.connect(g); g.connect(this.ctx.destination);
+        src.start(now); src.stop(now + 0.3);
+    }
 
     // ─── 볼륨/음소거 ───────────────────────────────────────────
     setMuted(muted: boolean) {

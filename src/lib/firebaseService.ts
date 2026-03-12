@@ -99,10 +99,12 @@ export const SessionService = {
             updatedAt: rtdbTimestamp(),
         });
 
-        // 교사 sessions 배열에 코드 추가
-        await updateDoc(doc(db, 'teachers', teacherId), {
-            sessions: [...(await TeacherService.get(teacherId))?.sessions ?? [], code],
-        });
+        // 교사 sessions 배열에 코드 추가 (문서 미존재 시에도 안전)
+        const existing = await TeacherService.get(teacherId);
+        await setDoc(doc(db, 'teachers', teacherId), {
+            sessions: [...(existing?.sessions ?? []), code],
+            updatedAt: serverTimestamp(),
+        }, { merge: true });
 
         return session;
     },

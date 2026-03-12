@@ -55,6 +55,7 @@ export default function SessionCreate() {
     const [classCode, setClassCode] = useState(generateCode);
     const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [createError, setCreateError] = useState('');
 
     // Settings
     const [minGroup, setMinGroup] = useState(3);
@@ -109,6 +110,7 @@ export default function SessionCreate() {
             setStep('ready');
         } catch (e) {
             console.error('세션 생성 오류:', e);
+            setCreateError('세션 생성에 실패했습니다. 다시 시도해주세요.');
         } finally {
             setLoading(false);
         }
@@ -232,6 +234,11 @@ export default function SessionCreate() {
                                 </div>
                             </div>
 
+                            {createError && (
+                                <p className="text-xs mb-3 text-center" style={{ color: '#f43f5e' }} role="alert">
+                                    {createError}
+                                </p>
+                            )}
                             <motion.button
                                 whileHover={{ scale: 1.02, y: -2 }} whileTap={{ scale: 0.98 }}
                                 onClick={handleCreate}

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ChevronRight } from 'lucide-react';
 import { useAuthStore, useSessionStore } from '@/store';
 import { createMockStudent, MOCK_GROUP } from '@/lib/mockData';
+import { audioManager } from '@/lib/audioManager';
 import type { Persona } from '@/types';
 
 const PERSONAS: {
@@ -37,14 +38,20 @@ function SortingAnimation({ onComplete }: { onComplete: (p: Persona) => void }) 
     const picked = PERSONAS[Math.floor(Math.random() * PERSONAS.length)];
 
     useEffect(() => {
+        // 수정구슬 사운드
+        audioManager.playSFX('crystal');
+
         // Phase 1: shuffle messages
         const msgInterval = setInterval(() => {
             setMessageIdx(i => (i + 1) % SORTING_MESSAGES.length);
         }, 700);
 
-        // Phase 2: shuffle emoji cards rapidly
+        // Phase 2: shuffle emoji cards rapidly + 셔플 사운드
+        let shuffleCount = 0;
         const emojiInterval = setInterval(() => {
             setCurrentEmojis([...PERSONAS].sort(() => Math.random() - 0.5).map(p => p.emoji));
+            shuffleCount++;
+            if (shuffleCount % 8 === 0) audioManager.playSFX('whoosh');
         }, 120);
 
         // Phase 3: slow down and reveal after 3.5s
@@ -402,10 +409,12 @@ export default function StudentOnboarding() {
 
     function handleSortingComplete(persona: Persona) {
         setAssignedPersona(persona);
+        audioManager.playSFX('reveal');
         setStage('reveal');
     }
 
     function handleRevealConfirm() {
+        audioManager.playSFX('click');
         setStage('tutorial');
     }
 
@@ -477,7 +486,7 @@ export default function StudentOnboarding() {
                             </div>
                             <motion.button
                                 whileHover={{ scale: 1.05, y: -3 }} whileTap={{ scale: 0.97 }}
-                                onClick={() => setStage('sorting')}
+                                onClick={() => { audioManager.playSFX('click'); setStage('sorting'); }}
                                 className="flex items-center gap-3 px-12 py-5 rounded-2xl font-black text-xl text-white"
                                 style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 0 40px rgba(124,58,237,0.6)' }}
                             >

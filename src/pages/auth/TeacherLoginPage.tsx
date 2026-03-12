@@ -76,8 +76,14 @@ export default function TeacherLoginPage() {
             }
             setUser(teacherData);
             navigate('/teacher/dashboard');
-        } catch {
-            setError('Google 로그인 중 오류가 발생했습니다.');
+        } catch (err: any) {
+            // 팝업 취소는 에러 아님
+            if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+                setError('');
+            } else {
+                console.error('Google login error:', err);
+                setError('Google 로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+            }
         } finally {
             setLoading(false);
         }
