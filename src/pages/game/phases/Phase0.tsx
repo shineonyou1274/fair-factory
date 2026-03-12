@@ -112,22 +112,32 @@ export default function Phase0({ persona, onPhaseComplete }: Props) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen flex flex-col items-center justify-center px-4 py-8"
+            className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden"
         >
+            {/* Phase 0 배경 */}
+            <div className="absolute inset-0 z-0">
+                <img src="/phases/phase0-bg.png" alt="" className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.25) saturate(1.3)' }} />
+                <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(244,63,94,0.15), rgba(10,6,24,0.8))' }} />
+            </div>
             <AnimatePresence mode="wait">
 
                 {/* Intro */}
                 {stage === 'intro' && (
                     <motion.div key="intro"
                         initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -30 }}
-                        className="text-center max-w-xl"
+                        className="text-center max-w-xl relative z-10"
                     >
                         <motion.div
-                            animate={{ rotate: [0, 5, -5, 0] }}
+                            animate={{ scale: [1, 1.05, 1], y: [0, -5, 0] }}
                             transition={{ repeat: Infinity, duration: 4 }}
-                            className="text-8xl mb-6"
+                            className="mb-6 mx-auto w-32 h-32 sm:w-40 sm:h-40 relative"
                         >
-                            🎭
+                            <img src="/boss/mamon.png" alt="탐욕의 사이렌 마몬"
+                                className="w-full h-full object-contain drop-shadow-2xl"
+                                style={{ filter: 'drop-shadow(0 0 30px rgba(244,63,94,0.5))' }}
+                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                            />
                         </motion.div>
                         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-5 text-xs font-bold uppercase tracking-widest"
                             style={{ background: 'rgba(244,63,94,0.15)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e' }}>
@@ -159,7 +169,7 @@ export default function Phase0({ persona, onPhaseComplete }: Props) {
                 {stage === 'ad' && (
                     <motion.div key="ad"
                         initial={{ opacity: 0, scale: 1.1 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                        className="w-full max-w-md"
+                        className="w-full max-w-md relative z-10"
                     >
                         {/* Fake TV frame */}
                         <div className="text-center mb-4">
@@ -179,7 +189,7 @@ export default function Phase0({ persona, onPhaseComplete }: Props) {
                 {stage === 'reaction' && (
                     <motion.div key="reaction"
                         initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
-                        className="text-center max-w-lg"
+                        className="text-center max-w-lg relative z-10"
                     >
                         {bought ? (
                             <>

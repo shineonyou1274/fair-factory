@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Zap, CheckCircle, Lock, Timer } from 'lucide-react';
+import { Send, Zap, CheckCircle, Lock, Timer, ChevronDown, ChevronUp } from 'lucide-react';
 import type { NpcCharacter } from '@/types';
 
 const MAX_ROUNDS = 5;      // NPC당 최대 발언 횟수
@@ -20,6 +20,44 @@ const ACTION_CARDS: Record<string, { label: string; emoji: string; color: string
 const NPC_IMG: Record<string, string> = {
     gorex: '/npcs/gorex.png', tierra: '/npcs/tierra.png',
     maxwell: '/npcs/maxwell.png', amara: '/npcs/amara.png', kim: '/npcs/kim.png',
+};
+
+const NPC_PROFILES: Record<string, { title: string; bg: string; desc: string; personality: string; hint: string }> = {
+    gorex: {
+        title: '대형 유통업자',
+        bg: '20년간 카카오 유통망을 구축한 사업가. 마진 40%를 "유통 인프라 비용"이라고 정당화하지만, 과도한 이윤이 포함되어 있습니다.',
+        desc: '도로, 창고, 인건비 등 실제 비용이 있긴 하지만, 농부들에게 돌아가는 몫은 턱없이 적습니다.',
+        personality: '자신감 넘치고 방어적. 돈과 효율성을 중시합니다.',
+        hint: '💡 실제 원가 구조를 파고들거나, 구체적 데이터로 마진의 모순을 지적하면 흔들립니다.',
+    },
+    tierra: {
+        title: '가나의 소규모 카카오 농장주',
+        bg: '3대째 카카오 농사를 짓는 가나 쿠마시 출신. 빚 2,000만원이 있고, 12세 아들 코피의 학비(연 300만원)를 감당하기 어렵습니다.',
+        desc: '중간상인에게 헐값(kg당 800원)에 카카오를 넘기고 있으며, 공정무역 인증을 받고 싶지만 비용(50만원)이 연 소득의 30%라 엄두를 못 냅니다.',
+        personality: '수줍고 조용하지만 따뜻한 사람. 가족 이야기에 눈물을 보입니다.',
+        hint: '💡 공감과 배려의 말로 마음을 열고, 인증 지원 제도나 협동조합에 대해 물어보세요.',
+    },
+    maxwell: {
+        title: '다국적 식품기업 공급망 담당 상무',
+        bg: 'MBA 출신 15년차 임원. CSR 보고서에는 "지속가능한 공급망"을 강조하지만, 실제로는 최저가 구매 정책을 유지합니다.',
+        desc: 'ESG 등급 상위 10%를 자랑하지만, 이는 보고서 포장에 불과합니다. 농부들에게 공정한 대가를 지불하지 않습니다.',
+        personality: '세련되고 논리적. 기업 용어로 무장하지만 모순을 찔리면 당황합니다.',
+        hint: '💡 CSR 보고서와 실제 행동의 모순을 데이터로 지적하면 효과적입니다.',
+    },
+    amara: {
+        title: '가나 쿠마시 공정무역 협동조합장',
+        bg: '87가구가 소속된 협동조합을 이끌고 있습니다. 본인도 한때 티에라처럼 어려운 농부였습니다.',
+        desc: '공정무역 인증을 통해 농부들의 삶을 바꾸고 싶지만, 초기 인증 비용과 대기업의 저가 압박이 장벽입니다.',
+        personality: '열정적이고 따뜻한 리더. 공정무역의 가치를 깊이 믿고 있습니다.',
+        hint: '💡 구체적인 지원 방안이나 윈윈 모델을 제시하면 강하게 호응합니다.',
+    },
+    kim: {
+        title: '30대 직장인, 소비자 대표',
+        bg: '두 아이의 엄마. 생활비를 아끼느라 항상 최저가 상품을 찾습니다.',
+        desc: '"공정무역" 마크를 마트에서 본 적 있지만 "비싼 제품 = 사치"라고 생각합니다. 공정무역이 실제로 어떤 의미인지는 잘 모릅니다.',
+        personality: '현실적이고 솔직함. 처음엔 무관심하지만 감정적으로 움직일 수 있습니다.',
+        hint: '💡 가격 차이가 하루 200원 수준이라는 점, 농부 아이들의 교육 이야기로 접근하세요.',
+    },
 };
 
 // ─── NPC Response Generator (mock AI, context-aware) ─────────
@@ -224,12 +262,14 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
+    const [profileOpen, setProfileOpen] = useState(true);
     const npc = npcs.find(n => n.id === selectedNpc)!;
     const chatHistory = messages[selectedNpc] ?? [];
     const action = ACTION_CARDS[persona];
     const persuadeCount = npcs.filter(n => n.isPersuaded).length;
     const roundsLeft = npcRounds[selectedNpc] ?? 0;
     const isExhausted = roundsLeft <= 0 && !npc?.isPersuaded;
+    const profile = NPC_PROFILES[selectedNpc];
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -342,7 +382,13 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="min-h-screen flex flex-col max-w-3xl mx-auto px-4 py-6">
+            className="min-h-screen flex flex-col max-w-3xl mx-auto px-4 py-6 relative">
+            {/* Phase 2 배경 */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <img src="/phases/phase2-bg.png" alt="" className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.18) saturate(1.2)' }} />
+                <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(6,214,160,0.08), rgba(10,6,24,0.85))' }} />
+            </div>
 
             {/* Header */}
             <div className="text-center mb-5">
@@ -362,44 +408,85 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                 <NpcSelector npcs={npcs} selected={selectedNpc} onSelect={setSelectedNpc} />
             </div>
 
-            {/* NPC 공략 힌트 */}
-            {npc && (
-                <div className="mb-3 rounded-xl px-4 py-3 text-xs"
+            {/* NPC 프로필 카드 */}
+            {npc && profile && (
+                <div className="mb-3 rounded-xl overflow-hidden text-xs"
                     style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
-                    <div className="flex items-start gap-3">
-                        <div>
-                            <span className="font-bold text-white">{npc.emoji} {npc.name}</span>
-                            <span className="ml-2" style={{ color: 'rgba(167,139,250,0.5)' }}>{npc.role}</span>
+                    {/* 헤더: 이름 + 상태 + 접기 버튼 */}
+                    <button className="w-full px-4 py-3 flex items-center gap-3 text-left"
+                        onClick={() => setProfileOpen(p => !p)}>
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-base">{npc.emoji}</span>
+                            <div>
+                                <span className="font-bold text-white text-sm">{npc.name}</span>
+                                <span className="ml-2" style={{ color: 'rgba(167,139,250,0.6)' }}>{profile.title}</span>
+                            </div>
                         </div>
-                        <div className="ml-auto flex items-center gap-3 flex-shrink-0">
-                            {/* 타이머 */}
+                        <div className="flex items-center gap-3 flex-shrink-0">
                             {!npc.isPersuaded && !isExhausted && (
-                                <div className="flex items-center gap-1 text-xs font-mono"
+                                <div className="flex items-center gap-1 font-mono"
                                     style={{ color: timer <= 10 ? '#f43f5e' : 'rgba(196,181,253,0.5)' }}>
                                     <Timer size={11} />
                                     {String(timer).padStart(2, '0')}s
                                 </div>
                             )}
-                            {/* 라운드 카운터 */}
                             {!npc.isPersuaded && (
-                                <div className="text-xs" style={{ color: roundsLeft <= 1 ? '#f43f5e' : 'rgba(196,181,253,0.4)' }}>
-                                    {roundsLeft}/{MAX_ROUNDS} 라운드
+                                <div style={{ color: roundsLeft <= 1 ? '#f43f5e' : 'rgba(196,181,253,0.4)' }}>
+                                    {roundsLeft}/{MAX_ROUNDS}
                                 </div>
                             )}
-                            <span style={{ color: npc.isPersuaded ? '#06d6a0' : '#fbbf24' }}>
-                                {npc.isPersuaded ? '✅ 설득 완료' : `신뢰도 ${npc.trustLevel}%`}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                                    <div className="h-full rounded-full transition-all duration-500"
+                                        style={{ width: `${npc.trustLevel}%`, background: npc.isPersuaded ? '#06d6a0' : npc.trustLevel >= 60 ? '#fbbf24' : '#f97316' }} />
+                                </div>
+                                <span style={{ color: npc.isPersuaded ? '#06d6a0' : '#fbbf24' }}>
+                                    {npc.isPersuaded ? '✅' : `${npc.trustLevel}%`}
+                                </span>
+                            </div>
+                            {profileOpen ? <ChevronUp size={14} style={{ color: 'rgba(167,139,250,0.5)' }} /> : <ChevronDown size={14} style={{ color: 'rgba(167,139,250,0.5)' }} />}
                         </div>
-                    </div>
-                    <div className="mt-2" style={{ color: 'rgba(196,181,253,0.6)' }}>
-                        {{
-                            gorex: '💡 날카로운 질문(Sigma)이나 구체적 데이터 제시에 반응합니다. 이익 구조를 지적하면 효과적!',
-                            tierra: '💡 공감과 배려의 말이 효과적입니다. 가족 이야기에 귀 기울이고, 인증 지원 제도에 대해 물어보세요.',
-                            maxwell: '💡 CSR 보고서와 실제 행동의 모순을 지적하면 흔들립니다. 데이터로 압박하세요.',
-                            amara: '💡 공정무역 확장 방법과 구체적 지원 방안을 제시하면 강하게 호응합니다.',
-                            kim: '💡 소비자 입장에서 공감하되, 작은 가격 차이의 큰 의미를 설명해보세요.',
-                        }[npc.id] ?? '상대방의 말을 잘 듣고 핵심을 짚어보세요.'}
-                    </div>
+                    </button>
+
+                    {/* 펼쳐지는 프로필 상세 */}
+                    <AnimatePresence>
+                        {profileOpen && (
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="px-4 pb-3 space-y-2" style={{ borderTop: '1px solid rgba(124,58,237,0.15)' }}>
+                                    <div className="pt-2" style={{ color: 'rgba(226,232,240,0.8)' }}>
+                                        <p>{profile.bg}</p>
+                                        <p className="mt-1" style={{ color: 'rgba(196,181,253,0.6)' }}>{profile.desc}</p>
+                                    </div>
+                                    <div className="flex items-start gap-2 rounded-lg px-3 py-2"
+                                        style={{ background: 'rgba(124,58,237,0.1)' }}>
+                                        <span style={{ color: 'rgba(167,139,250,0.8)' }}>성격:</span>
+                                        <span style={{ color: 'rgba(226,232,240,0.7)' }}>{profile.personality}</span>
+                                    </div>
+                                    <div className="rounded-lg px-3 py-2"
+                                        style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.15)' }}>
+                                        <span style={{ color: '#fbbf24' }}>{profile.hint}</span>
+                                    </div>
+                                    {/* 신뢰도 설명 — 첫 대화 시에만 표시 */}
+                                    {chatHistory.length <= 1 && (
+                                        <div className="rounded-lg px-3 py-2 flex items-start gap-2"
+                                            style={{ background: 'rgba(6,214,160,0.06)', border: '1px solid rgba(6,214,160,0.15)' }}>
+                                            <span style={{ color: '#06d6a0', flexShrink: 0 }}>ℹ️</span>
+                                            <span style={{ color: 'rgba(6,214,160,0.8)' }}>
+                                                <strong>신뢰도</strong>란 NPC가 당신의 말을 얼마나 신뢰하는지를 나타냅니다.
+                                                대화를 통해 신뢰도를 80% 이상으로 올리면 설득 성공! 공감, 데이터, 대안 제시 등 다양한 전략을 시도해보세요.
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             )}
 

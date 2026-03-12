@@ -160,7 +160,13 @@ export default function Phase3({ persona }: Props) {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="min-h-screen px-4 py-8 max-w-4xl mx-auto">
+            className="min-h-screen px-4 py-8 max-w-4xl mx-auto relative">
+            {/* Phase 3 배경 */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <img src="/phases/phase3-bg.png" alt="" className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.18) saturate(1.2)' }} />
+                <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.1), rgba(10,6,24,0.85))' }} />
+            </div>
 
             {/* Header */}
             <div className="text-center mb-8">

@@ -32,11 +32,11 @@ const PHASE_COLORS = ['#f43f5e', '#f5a623', '#06d6a0', '#a78bfa', '#38bdf8'];
 // ─── HUD Top Bar ──────────────────────────────────────────────
 function HUD({
     phase, persona, name, teamwork, xp, unreadCount,
-    onShop, onNotif, onLogout,
+    onShop, onNotif, onLogout, onHome,
 }: {
     phase: Phase; persona: string; name: string;
     teamwork: number; xp: number; unreadCount: number;
-    onShop: () => void; onNotif: () => void; onLogout: () => void;
+    onShop: () => void; onNotif: () => void; onLogout: () => void; onHome: () => void;
 }) {
     const color = PERSONA_COLORS[persona] ?? '#a78bfa';
     const phaseColor = PHASE_COLORS[phase];
@@ -45,6 +45,15 @@ function HUD({
         <header className="fixed top-0 left-0 right-0 z-50"
             style={{ background: 'rgba(10,6,24,0.92)', backdropFilter: 'blur(20px)', borderBottom: `1px solid ${phaseColor}30` }}>
             <div className="max-w-7xl mx-auto px-4 h-14 flex items-center gap-3">
+
+                {/* Home button */}
+                <button onClick={onHome} className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs text-white flex-shrink-0 transition-all"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #e94560)' }}
+                    onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 12px rgba(124,58,237,0.5)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
+                    aria-label="홈으로" title="홈으로 돌아가기">
+                    공
+                </button>
 
                 {/* Phase badge */}
                 <div className="flex items-center gap-2 px-3 py-1 rounded-xl flex-shrink-0"
@@ -331,6 +340,7 @@ export default function GameRoom() {
                 unreadCount={unreadCount}
                 onShop={() => setShopOpen(true)}
                 onNotif={() => setNotifOpen(v => !v)}
+                onHome={() => navigate('/')}
                 onLogout={() => {
                     if (confirm('정말 나가시겠습니까? 진행 상황이 저장되지 않을 수 있습니다.')) {
                         audioManager.stopBGM();

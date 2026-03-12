@@ -177,7 +177,13 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="min-h-screen px-4 py-8 max-w-3xl mx-auto">
+            className="min-h-screen px-4 py-8 max-w-3xl mx-auto relative">
+            {/* Phase 1 배경 */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <img src="/phases/phase1-bg.png" alt="" className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.2) saturate(1.2)' }} />
+                <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 30%, rgba(245,166,35,0.1), rgba(10,6,24,0.85))' }} />
+            </div>
 
             {/* Header */}
             <div className="text-center mb-8">
