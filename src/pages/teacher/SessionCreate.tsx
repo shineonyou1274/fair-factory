@@ -52,7 +52,7 @@ export default function SessionCreate() {
     const { setSession } = useSessionStore();
 
     const [step, setStep] = useState<'settings' | 'ready'>('settings');
-    const [classCode] = useState(generateCode);
+    const [classCode, setClassCode] = useState(generateCode);
     const [copied, setCopied] = useState(false);
     const [loading, setLoading] = useState(false);
 
@@ -82,6 +82,7 @@ export default function SessionCreate() {
                     user.displayName ?? '선생님',
                     { maxGroupSize: maxGroup as 3 | 4 | 5 }
                 );
+                setClassCode(session.classCode); // Firebase가 생성한 실제 코드로 갱신
                 setSession(session);
             } else {
                 // 🧪 목 데이터 모드

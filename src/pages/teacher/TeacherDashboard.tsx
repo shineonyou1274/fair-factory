@@ -8,7 +8,7 @@ import {
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuthStore, useSessionStore } from '@/store';
-import { MOCK_SESSION } from '@/lib/mockData';
+import { MOCK_SESSION, isFirebaseConfigured } from '@/lib/mockData';
 import type { ClassSession } from '@/types';
 
 // ── Small Stat Card ───────────────────────────────────────────
@@ -147,12 +147,28 @@ export default function TeacherDashboard() {
     const navigate = useNavigate();
     const { user, logout } = useAuthStore();
     const { setSession } = useSessionStore();
-    const [sessions, setSessions] = useState<ClassSession[]>([MOCK_SESSION]);
+    const [sessions, setSessions] = useState<ClassSession[]>([]);
     const [tab, setTab] = useState<'sessions' | 'guide'>('sessions');
+    const [loadingSessions, setLoadingSessions] = useState(true);
 
     useEffect(() => {
-        // 실제 Firebase 연결 시 여기서 sessions 불러오기
-        // const q = query(collection(db, 'sessions'), where('teacherId', '==', user?.uid))
+        async function loadSessions() {
+            setLoadingSessions(true);
+            try {
+                if (isFirebaseConfigured() && user?.uid) {
+                    const { TeacherService } = await import('@/lib/firebaseService');
+                    const real = await TeacherService.getSessions(user.uid);
+                    setSessions(real.length > 0 ? real : []);
+                } else {
+                    setSessions([MOCK_SESSION]);
+                }
+            } catch {
+                setSessions([MOCK_SESSION]);
+            } finally {
+                setLoadingSessions(false);
+            }
+        }
+        loadSessions();
     }, [user]);
 
     async function handleLogout() {
@@ -259,7 +275,12 @@ export default function TeacherDashboard() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                         >
-                            {sessions.length === 0 ? (
+                            {loadingSessions ? (
+                                <div className="text-center py-20">
+                                    <div className="text-5xl mb-4 animate-pulse">🔄</div>
+                                    <h3 className="text-xl font-bold text-white mb-2">세션 불러오는 중...</h3>
+                                </div>
+                            ) : sessions.length === 0 ? (
                                 <div className="text-center py-20">
                                     <div className="text-5xl mb-4">📭</div>
                                     <h3 className="text-xl font-bold text-white mb-2">아직 세션이 없어요</h3>

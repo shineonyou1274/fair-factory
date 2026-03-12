@@ -70,7 +70,8 @@ function ItemCard({
                             onError={e => {
                                 const t = e.target as HTMLImageElement;
                                 t.style.display = 'none';
-                                t.parentElement!.innerHTML = `<span class="text-3xl">${item.emoji}</span>`;
+                                t.parentElement!.textContent = item.emoji;
+                                t.parentElement!.className = 'text-3xl';
                             }}
                         />
                     ) : (

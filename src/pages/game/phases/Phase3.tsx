@@ -51,7 +51,7 @@ function SliderRow({ label, value, min, max, color, unit = '%', onChange, hint }
     color: string; unit?: string; onChange: (v: number) => void; hint?: string;
 }) {
     return (
-        <div className="mb-5">
+        <div className="mb-3">
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-white">{label}</span>
@@ -180,56 +180,9 @@ export default function Phase3({ persona }: Props) {
                 )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* ── Left: Sliders ── */}
-                <div className="rounded-2xl p-6"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)' }}>
-                    <h3 className="font-black text-white mb-5 flex items-center gap-2">
-                        🎛️ 가격 조절 패널
-                    </h3>
-
-                    <SliderRow label="카카오 원가" value={margins.farmCost} min={300} max={1500} unit="원"
-                        color="#06d6a0" onChange={set('farmCost')}
-                        hint="농장에서 카카오 1kg 생산에 드는 원가" />
-                    <SliderRow label="농장주 마진" value={margins.farmerMargin} min={5} max={50}
-                        color="#06d6a0" onChange={set('farmerMargin')}
-                        hint="농장주의 수익률 (현실: 3~8%)" />
-                    <SliderRow label="협동조합 마진" value={margins.coopMargin} min={2} max={30}
-                        color="#38bdf8" onChange={set('coopMargin')}
-                        hint="공정무역 협동조합의 운영비 및 공동 기금" />
-                    <SliderRow label="유통업자 마진" value={margins.distMargin} min={5} max={60}
-                        color="#f5a623" onChange={set('distMargin')}
-                        hint="유통업자 마진 (현실: 35~45%)" />
-                    <SliderRow label="소매상 마진" value={margins.retailMargin} min={10} max={50}
-                        color="#a78bfa" onChange={set('retailMargin')}
-                        hint="슈퍼마켓 등 소매상의 수익률" />
-
-                    {/* ── 실제 데이터 비교 카드 ── */}
-                    <div className="mt-4 rounded-xl p-4 text-xs space-y-2"
-                        style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.2)' }}>
-                        <div className="font-bold text-white mb-2 flex items-center gap-1">
-                            📊 실제 초콜릿 수익 분배 (2023 기준)
-                        </div>
-                        {[
-                            { who: '🌱 카카오 농장주', real: '3~6%', fair: '15% 이상', color: '#06d6a0' },
-                            { who: '🏭 유통·제조사', real: '35~45%', fair: '25% 이하', color: '#f5a623' },
-                            { who: '🏪 소매상', real: '20~30%', fair: '20~25%', color: '#a78bfa' },
-                        ].map(d => (
-                            <div key={d.who} className="flex items-center gap-2">
-                                <span className="flex-1" style={{ color: 'rgba(196,181,253,0.7)' }}>{d.who}</span>
-                                <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(244,63,94,0.15)', color: '#f43f5e' }}>현실 {d.real}</span>
-                                <span className="px-1.5 py-0.5 rounded" style={{ background: `${d.color}20`, color: d.color }}>목표 {d.fair}</span>
-                            </div>
-                        ))}
-                        <p className="mt-2" style={{ color: 'rgba(139,92,246,0.5)' }}>
-                            * 농장주 몫이 15% 이상 + 최종가 ₩2,800 이상이면 공정 인증 기준 충족!
-                        </p>
-                    </div>
-                </div>
-
-
-                {/* ── Right: Result ── */}
-                <div className="space-y-5">
+            <div className="space-y-6">
+                {/* ── 상단: 결과 패널 (sticky) ── */}
+                <div className="lg:sticky lg:top-16 z-10 space-y-4">
                     {/* Price Display — 신호등 3단계 */}
                     <motion.div
                         className="rounded-2xl p-6 text-center"
@@ -342,6 +295,52 @@ export default function Phase3({ persona }: Props) {
                             </div>
                         </motion.div>
                     )}
+                </div>
+
+                {/* ── 하단: 슬라이더 패널 ── */}
+                <div className="rounded-2xl p-6"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)' }}>
+                    <h3 className="font-black text-white mb-4 flex items-center gap-2">
+                        🎛️ 가격 조절 패널
+                    </h3>
+
+                    <SliderRow label="카카오 원가" value={margins.farmCost} min={300} max={1500} unit="원"
+                        color="#06d6a0" onChange={set('farmCost')}
+                        hint="농장에서 카카오 1kg 생산에 드는 원가" />
+                    <SliderRow label="농장주 마진" value={margins.farmerMargin} min={5} max={50}
+                        color="#06d6a0" onChange={set('farmerMargin')}
+                        hint="농장주의 수익률 (현실: 3~8%)" />
+                    <SliderRow label="협동조합 마진" value={margins.coopMargin} min={2} max={30}
+                        color="#38bdf8" onChange={set('coopMargin')}
+                        hint="공정무역 협동조합의 운영비 및 공동 기금" />
+                    <SliderRow label="유통업자 마진" value={margins.distMargin} min={5} max={60}
+                        color="#f5a623" onChange={set('distMargin')}
+                        hint="유통업자 마진 (현실: 35~45%)" />
+                    <SliderRow label="소매상 마진" value={margins.retailMargin} min={10} max={50}
+                        color="#a78bfa" onChange={set('retailMargin')}
+                        hint="슈퍼마켓 등 소매상의 수익률" />
+
+                    {/* 실제 데이터 비교 카드 */}
+                    <div className="mt-2 rounded-xl p-4 text-xs space-y-2"
+                        style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.2)' }}>
+                        <div className="font-bold text-white mb-2 flex items-center gap-1">
+                            📊 실제 초콜릿 수익 분배 (2023 기준)
+                        </div>
+                        {[
+                            { who: '🌱 카카오 농장주', real: '3~6%', fair: '15% 이상', color: '#06d6a0' },
+                            { who: '🏭 유통·제조사', real: '35~45%', fair: '25% 이하', color: '#f5a623' },
+                            { who: '🏪 소매상', real: '20~30%', fair: '20~25%', color: '#a78bfa' },
+                        ].map(d => (
+                            <div key={d.who} className="flex items-center gap-2">
+                                <span className="flex-1" style={{ color: 'rgba(196,181,253,0.7)' }}>{d.who}</span>
+                                <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(244,63,94,0.15)', color: '#f43f5e' }}>현실 {d.real}</span>
+                                <span className="px-1.5 py-0.5 rounded" style={{ background: `${d.color}20`, color: d.color }}>목표 {d.fair}</span>
+                            </div>
+                        ))}
+                        <p className="mt-2" style={{ color: 'rgba(139,92,246,0.5)' }}>
+                            * 농장주 몫이 15% 이상 + 최종가 ₩2,800 이상이면 공정 인증 기준 충족!
+                        </p>
+                    </div>
                 </div>
             </div>
 

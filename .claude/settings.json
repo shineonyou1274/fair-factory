@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(grep -r \"logout\\\\|signOut\" c:Users경남교육청Desktopfair-factory/src --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"LogOut\\\\|logout\\\\|Logout\" c:Users경남교육청Desktopfair-factory/src --include=*.tsx --include=*.ts -B2 -A2)",
+      "Bash(xargs grep:*)",
+      "Bash(npx wait-on:*)",
+      "Bash(vercel deploy:*)"
+    ]
+  }
+}

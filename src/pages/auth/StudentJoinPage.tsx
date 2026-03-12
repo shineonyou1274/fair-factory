@@ -27,10 +27,14 @@ export default function StudentJoinPage() {
         if (code.length < 6) return setError('코드는 6자리입니다.');
         if (!name.trim()) return setError('이름을 입력해주세요.');
 
-        // 테스트 코드 처리
-        if (code.toUpperCase() === 'FAIR01' && !isFirebaseConfigured()) {
-            setSession(MOCK_SESSION);
-            navigate('/onboarding', { state: { sessionId: MOCK_SESSION.id, playerName: name.trim() } });
+        // Firebase 미설정 시 테스트 코드 처리
+        if (!isFirebaseConfigured()) {
+            if (code.toUpperCase() === 'FAIR01') {
+                setSession(MOCK_SESSION);
+                navigate('/onboarding', { state: { sessionId: MOCK_SESSION.id, playerName: name.trim() } });
+                return;
+            }
+            setError('Firebase가 설정되지 않았습니다. 테스트 코드 FAIR01을 사용해주세요.');
             return;
         }
 

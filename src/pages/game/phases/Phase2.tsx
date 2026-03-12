@@ -22,34 +22,106 @@ const NPC_IMG: Record<string, string> = {
     maxwell: '/npcs/maxwell.png', amara: '/npcs/amara.png', kim: '/npcs/kim.png',
 };
 
-// ─── NPC Response Generator (mock AI) ────────────────────────
-function generateNpcResponse(npc: NpcCharacter, userMsg: string, persona: string): string {
+// ─── NPC Response Generator (mock AI, context-aware) ─────────
+function generateNpcResponse(npc: NpcCharacter, userMsg: string, persona: string, history: any[] = []): string {
     const lower = userMsg.toLowerCase();
-    const hasChallenge = lower.includes('왜') || lower.includes('어떻게') || lower.includes('출처') || lower.includes('실제');
-    const hasEmpathy = lower.includes('이해') || lower.includes('함께') || lower.includes('어렵') || lower.includes('힘드');
-    const hasAlternative = lower.includes('대안') || lower.includes('방법') || lower.includes('협동') || lower.includes('윈윈');
+    const hasChallenge = lower.includes('왜') || lower.includes('어떻게') || lower.includes('출처') || lower.includes('실제') || lower.includes('데이터') || lower.includes('수치');
+    const hasEmpathy = lower.includes('이해') || lower.includes('함께') || lower.includes('어렵') || lower.includes('힘드') || lower.includes('걱정') || lower.includes('도와');
+    const hasAlternative = lower.includes('대안') || lower.includes('방법') || lower.includes('협동') || lower.includes('윈윈') || lower.includes('지원') || lower.includes('인증');
 
-    if (npc.id === 'gorex') {
-        if (persona === 'Sigma' && hasChallenge) return '흠... 그 부분은 제가 잘못 말씀드렸군요. 마진 구조에 대해 좀 더 투명하게 설명해드리겠습니다. 사실 우리도 압박이 심합니다만...';
-        return '싼 가격이 소비자를 위한 겁니다! 유통 비용이 얼마나 드는지 아세요? 우리도 남는 게 없어요.';
-    }
-    if (npc.id === 'tierra') {
-        if (hasEmpathy) return '...감사해요. 사실 인증 비용 때문에 공정무역에 가입하고 싶어도 못 하고 있어요. 지원 제도가 있다면 정말 해보고 싶습니다.';
-        return '우리 가족은 이 농장 하나로 먹고살아요. 빚도 많고... 어쩔 수 없이 싸게 팔 수밖에 없어요.';
-    }
-    if (npc.id === 'maxwell') {
-        if (persona === 'Sigma') return '(목소리가 떨림) 그... 그 데이터는 구체적인 맥락이 필요합니다. 우리 기업도 지속가능성을 위해 많은 투자를 하고 있습니다!';
-        return '저희는 글로벌 공급망의 효율화를 추구합니다. CSR 활동도 열심히 하고 있고요. 주주 기대치를 충족시키는 건 기업의 의무입니다.';
-    }
-    if (npc.id === 'amara') {
-        if (hasAlternative) return '바로 그겁니다! 우리 협동조합이 원하는 게 그거예요. 농장주들을 설득하고 인증 비용 지원만 있으면 가능해요. 함께 해봅시다!';
-        return '공정무역은 단순한 가격 문제가 아니에요. 존엄성의 문제입니다. 우리 농부들도 자녀를 학교에 보내고 싶거든요.';
-    }
-    if (npc.id === 'kim') {
-        if (hasEmpathy || persona === 'Lambda') return '...200원 차이라고요? 생각해보니 하루 커피 값도 안 되네요. 그 차이가 아이들 교육비라면 저도 충분히 낼 수 있을 것 같아요.';
-        return '저도 나쁜 건 아니에요. 그냥 비싼 건 살 수 없는 거잖아요. 가격이 오르면 서민들은 어쩌라고요?';
-    }
-    return '...생각해볼게요.';
+    // 대화 횟수로 단계 결정: 초반(1~2), 중반(3~4), 후반(5+)
+    const userMsgCount = history.filter(m => m.role === 'user').length;
+    const stage = userMsgCount <= 2 ? 'early' : userMsgCount <= 4 ? 'mid' : 'late';
+
+    const RESPONSES: Record<string, Record<string, string[]>> = {
+        gorex: {
+            early: [
+                '싼 가격이 소비자를 위한 겁니다! 유통 비용이 얼마나 드는지 아세요? 우리도 남는 게 없어요.',
+                '유통망을 누가 구축했는데요? 마진 40%는 당연한 겁니다. 도로, 창고, 인건비... 다 돈이에요.',
+            ],
+            mid: [
+                '음... 그 지적은 좀 아프네요. 하지만 우리가 마진을 줄이면 유통망이 무너집니다. 그럼 농부들도 판매처가 없어져요.',
+                '(잠시 침묵) 솔직히 말하면... 경쟁사가 워낙 가격을 후려치니까 우리도 어쩔 수 없는 부분이 있어요.',
+            ],
+            late: [
+                '흠... 그 부분은 제가 잘못 말씀드렸군요. 마진 구조에 대해 좀 더 투명하게 설명해드리겠습니다. 사실 우리도 압박이 심합니다만...',
+                '(한숨) 알겠습니다. 5%까지는 아니더라도... 마진을 조금 조정하는 건 검토해볼 수 있겠네요. 단, 조건이 있습니다.',
+            ],
+        },
+        tierra: {
+            early: [
+                '우리 가족은 이 농장 하나로 먹고살아요. 빚도 많고... 어쩔 수 없이 싸게 팔 수밖에 없어요.',
+                '(눈을 피하며) 아들이 올해 중학교에 들어가는데... 학비가 300만원이에요. 카카오 1년 팔아도 반밖에 안 돼요.',
+            ],
+            mid: [
+                '...감사해요. 누군가 이야기를 들어주는 게 이렇게 힘이 되는 줄 몰랐어요. 사실 인증 비용 때문에 공정무역에 가입하고 싶어도 못 하고 있어요.',
+                '(눈물을 닦으며) 빚이 2000만원이에요. 중간상인한테 갚아야 해서 매년 헐값에 넘기는 거예요. 벗어나고 싶어요.',
+            ],
+            late: [
+                '지원 제도가 있다면... 정말 해보고 싶습니다. 아들한테 "아빠가 공정무역 농부"라고 말할 수 있다면 꿈만 같아요.',
+                '(눈빛이 밝아지며) 협동조합 아마라 씨가 말한 인증 지원 프로그램... 저도 참여할 수 있을까요? 함께라면 용기가 나요.',
+            ],
+        },
+        maxwell: {
+            early: [
+                '저희는 글로벌 공급망의 효율화를 추구합니다. CSR 활동도 열심히 하고 있고요. 주주 기대치를 충족시키는 건 기업의 의무입니다.',
+                '작년 지속가능성 보고서 보셨나요? 저희 ESG 등급은 업계 상위 10%입니다. 충분히 하고 있습니다.',
+            ],
+            mid: [
+                '(목소리가 떨림) 그... 그 데이터는 구체적인 맥락이 필요합니다. 우리 기업도 지속가능성을 위해 많은 투자를 하고 있습니다!',
+                '...보고서와 현장의 괴리? 인정합니다. 하지만 모든 걸 한 번에 바꿀 순 없어요. 점진적 개선이 현실적입니다.',
+            ],
+            late: [
+                '(넥타이를 고치며) 좋습니다. 파일럿 프로그램으로 일부 공급망에서 공정무역 인증을 시도해보는 건... 검토하겠습니다.',
+                '솔직히, MZ 소비자들이 공정무역 제품을 찾고 있어요. 비즈니스 관점에서도 더 미룰 수 없다는 건 알고 있습니다.',
+            ],
+        },
+        amara: {
+            early: [
+                '공정무역은 단순한 가격 문제가 아니에요. 존엄성의 문제입니다. 우리 농부들도 자녀를 학교에 보내고 싶거든요.',
+                '반가워요! 우리 협동조합에는 87가구가 있어요. 모두 더 나은 미래를 꿈꾸고 있죠.',
+            ],
+            mid: [
+                '맞아요, 인증 비용이 가장 큰 장벽이에요. 가구당 50만원이 필요한데, 1년 소득의 30%나 돼요.',
+                '농부들을 설득하는 건 제가 할 수 있어요. 하지만 초기 인증 비용 지원만 있으면 가능합니다.',
+            ],
+            late: [
+                '바로 그겁니다! 우리 협동조합이 원하는 게 그거예요. 인증 비용 지원만 있으면 가능해요. 함께 해봅시다!',
+                '당신 같은 사람이 더 많아지면 세상이 정말 바뀔 수 있어요. 고마워요, 진심으로.',
+            ],
+        },
+        kim: {
+            early: [
+                '저도 나쁜 건 아니에요. 그냥 비싼 건 살 수 없는 거잖아요. 가격이 오르면 서민들은 어쩌라고요?',
+                '솔직히 "공정무역" 이런 거 마트에서 본 적 있는데, 비싸 보여서 그냥 지나갔어요.',
+            ],
+            mid: [
+                '음... 하루 200원이라고요? 그건 생각 안 해봤네요. 커피 한 잔보다 싼 건가?',
+                '아이들이 학교에 못 간다고요...? 그건 좀 마음이 아프네요. 몰랐어요 그렇게까지인 줄은.',
+            ],
+            late: [
+                '...200원 차이라면 저도 충분히 낼 수 있을 것 같아요. 그 차이가 아이들 교육비라면요.',
+                '알겠어요. 다음에 마트 가면 한번 찾아볼게요, 공정무역 마크. 약속할게요.',
+            ],
+        },
+    };
+
+    const npcResponses = RESPONSES[npc.id];
+    if (!npcResponses) return '...생각해볼게요.';
+
+    // 특수 조건: 페르소나/키워드 매칭 시 한 단계 앞선 응답 제공
+    let effectiveStage = stage;
+    if (npc.id === 'gorex' && (persona === 'Sigma' || persona === 'Alpha') && hasChallenge) effectiveStage = stage === 'early' ? 'mid' : 'late';
+    if (npc.id === 'tierra' && hasEmpathy) effectiveStage = stage === 'early' ? 'mid' : 'late';
+    if (npc.id === 'maxwell' && hasChallenge && persona === 'Sigma') effectiveStage = stage === 'early' ? 'mid' : 'late';
+    if (npc.id === 'amara' && hasAlternative) effectiveStage = stage === 'early' ? 'mid' : 'late';
+    if (npc.id === 'kim' && (hasEmpathy || persona === 'Lambda')) effectiveStage = stage === 'early' ? 'mid' : 'late';
+
+    const pool = npcResponses[effectiveStage];
+    // 같은 단계 내에서 이전과 다른 응답 선택
+    const lastNpcMsg = [...history].reverse().find(m => m.role === 'npc')?.text;
+    const filtered = pool.filter(r => r !== lastNpcMsg);
+    return (filtered.length > 0 ? filtered : pool)[Math.floor(Math.random() * (filtered.length || pool.length))];
 }
 
 // ─── Chat Bubble ──────────────────────────────────────────────
@@ -246,11 +318,11 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                 }),
             });
             const data = await res.json();
-            response = data.text ?? generateNpcResponse(npc, text, persona);
+            response = data.text ?? generateNpcResponse(npc, text, persona, currentHistory);
         } catch {
             // 네트워크 오류 시 로컬 폴백
             await new Promise(r => setTimeout(r, 800 + Math.random() * 500));
-            response = generateNpcResponse(npc, text, persona);
+            response = generateNpcResponse(npc, text, persona, currentHistory);
         }
 
         const delta = text.length > 30 ? 8 : text.length > 15 ? 4 : 2;
@@ -322,7 +394,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                     <div className="mt-2" style={{ color: 'rgba(196,181,253,0.6)' }}>
                         {{
                             gorex: '💡 날카로운 질문(Sigma)이나 구체적 데이터 제시에 반응합니다. 이익 구조를 지적하면 효과적!',
-                            tierra: '💡 공감과 배려의 말(Lambda/Delta)이 효과적입니다. 실질적인 해결책을 제안해보세요.',
+                            tierra: '💡 공감과 배려의 말이 효과적입니다. 가족 이야기에 귀 기울이고, 인증 지원 제도에 대해 물어보세요.',
                             maxwell: '💡 CSR 보고서와 실제 행동의 모순을 지적하면 흔들립니다. 데이터로 압박하세요.',
                             amara: '💡 공정무역 확장 방법과 구체적 지원 방안을 제시하면 강하게 호응합니다.',
                             kim: '💡 소비자 입장에서 공감하되, 작은 가격 차이의 큰 의미를 설명해보세요.',

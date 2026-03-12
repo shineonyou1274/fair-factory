@@ -83,7 +83,7 @@ class AudioManager {
 
         const audio = new Audio(path);
         audio.loop = true;
-        audio.volume = this.muted ? 0 : this.bgmVolume;
+        audio.volume = 0; // 0부터 시작하여 페이드 인
         audio.play().catch(() => {
             // 자동재생 차단 시 조용히 무시
         });
@@ -91,9 +91,8 @@ class AudioManager {
         this.bgmAudio = audio;
         this.currentBGM = path;
 
-        // 페이드 인
-        audio.volume = 0;
-        this._fadeIn(audio, this.muted ? 0 : this.bgmVolume, 1200);
+        // 2초에 걸쳐 부드럽게 페이드 인 (갑작스러운 재생 방지)
+        this._fadeIn(audio, this.muted ? 0 : this.bgmVolume, 2000);
     }
 
     stopBGM() {

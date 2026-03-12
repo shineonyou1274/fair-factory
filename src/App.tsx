@@ -67,7 +67,7 @@ export default function App() {
           <ProtectedStudent><GameRoom /></ProtectedStudent>
         } />
         <Route path="/game/:sessionId/results" element={
-          <ProtectedTeacher><GameResults /></ProtectedTeacher>
+          <ProtectedStudent><GameResults /></ProtectedStudent>
         } />
 
         {/* Admin */}

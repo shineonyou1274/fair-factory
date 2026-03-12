@@ -1,18 +1,18 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useEffect, useState, lazy, Suspense } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Heart, Users, Bell, ShoppingBag, ChevronRight } from 'lucide-react';
+import { Zap, Heart, Users, Bell, ShoppingBag, ChevronRight, LogOut } from 'lucide-react';
 import { ref, onValue } from 'firebase/database';
 import { rtdb } from '@/lib/firebase';
 import { useAuthStore, useSessionStore, useUIStore } from '@/store';
 import { isFirebaseConfigured } from '@/lib/mockData';
 import type { Phase } from '@/types';
 
-import Phase0 from '@/pages/game/phases/Phase0';
-import Phase1 from '@/pages/game/phases/Phase1';
-import Phase2 from '@/pages/game/phases/Phase2';
-import Phase3 from '@/pages/game/phases/Phase3';
-import Phase4 from '@/pages/game/phases/Phase4';
+const Phase0 = lazy(() => import('@/pages/game/phases/Phase0'));
+const Phase1 = lazy(() => import('@/pages/game/phases/Phase1'));
+const Phase2 = lazy(() => import('@/pages/game/phases/Phase2'));
+const Phase3 = lazy(() => import('@/pages/game/phases/Phase3'));
+const Phase4 = lazy(() => import('@/pages/game/phases/Phase4'));
 import Shop from '@/components/game/Shop';
 import NotificationPanel from '@/components/game/NotificationPanel';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
@@ -32,11 +32,11 @@ const PHASE_COLORS = ['#f43f5e', '#f5a623', '#06d6a0', '#a78bfa', '#38bdf8'];
 // ─── HUD Top Bar ──────────────────────────────────────────────
 function HUD({
     phase, persona, name, teamwork, xp, unreadCount,
-    onShop, onNotif,
+    onShop, onNotif, onLogout,
 }: {
     phase: Phase; persona: string; name: string;
     teamwork: number; xp: number; unreadCount: number;
-    onShop: () => void; onNotif: () => void;
+    onShop: () => void; onNotif: () => void; onLogout: () => void;
 }) {
     const color = PERSONA_COLORS[persona] ?? '#a78bfa';
     const phaseColor = PHASE_COLORS[phase];
@@ -136,6 +136,13 @@ function HUD({
                 </button>
                 <LanguageSwitcher compact />
                 <AudioControls compact />
+                <button onClick={onLogout} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.2)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                    aria-label="나가기">
+                    <LogOut size={14} style={{ color: '#f43f5e' }} />
+                </button>
             </div>
         </header>
     );
@@ -220,7 +227,8 @@ function TeamPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
 // ─── Main GameRoom ────────────────────────────────────────────
 export default function GameRoom() {
     const { sessionId } = useParams();
-    const { studentProfile } = useAuthStore();
+    const navigate = useNavigate();
+    const { studentProfile, logout } = useAuthStore();
     const { currentPhase, setPhase, currentGroup } = useSessionStore();
     const { addNotification, unreadCount } = useUIStore();
     const [teamPanelOpen, setTeamPanelOpen] = useState(false);
@@ -248,6 +256,25 @@ export default function GameRoom() {
         });
         return () => unsub();
     }, [sessionId]);
+
+    // ── Mock 모드: 교사 탭에서 Phase 변경 시 storage event로 수신 ──
+    useEffect(() => {
+        if (isFirebaseConfigured()) return;
+        function onStorage(e: StorageEvent) {
+            if (e.key === 'fair-factory-session' && e.newValue) {
+                try {
+                    const parsed = JSON.parse(e.newValue);
+                    const newPhase = parsed?.state?.currentPhase;
+                    if (newPhase !== undefined && newPhase !== currentPhase) {
+                        setPhase(newPhase as Phase);
+                        addNotification({ type: 'phase_change', title: '단계 변경!', message: `Phase ${newPhase}: ${PHASE_NAMES[newPhase as Phase]}` });
+                    }
+                } catch { /* ignore */ }
+            }
+        }
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
+    }, [currentPhase]);
 
     // ── Dev: keyboard shortcut to change phase (for testing) ─────
     useEffect(() => {
@@ -304,6 +331,13 @@ export default function GameRoom() {
                 unreadCount={unreadCount}
                 onShop={() => setShopOpen(true)}
                 onNotif={() => setNotifOpen(v => !v)}
+                onLogout={() => {
+                    if (confirm('정말 나가시겠습니까? 진행 상황이 저장되지 않을 수 있습니다.')) {
+                        audioManager.stopBGM();
+                        logout();
+                        navigate('/');
+                    }
+                }}
             />
 
             {/* Phase Briefing Overlay */}
@@ -404,13 +438,24 @@ export default function GameRoom() {
 
             {/* ── Phase Content ── */}
             <main className="pt-14 min-h-screen">
-                <AnimatePresence mode="wait">
-                    {currentPhase === 0 && <Phase0 key="p0" persona={persona} onPhaseComplete={() => setPhase(1)} />}
-                    {currentPhase === 1 && <Phase1 key="p1" persona={persona} onPhaseComplete={() => setPhase(2)} sessionId={sessionId} studentId={studentProfile?.studentId} />}
-                    {currentPhase === 2 && <Phase2 key="p2" persona={persona} npcs={currentGroup?.npcs ?? []} />}
-                    {currentPhase === 3 && <Phase3 key="p3" persona={persona} />}
-                    {currentPhase === 4 && <Phase4 key="p4" persona={persona} playerName={name} xp={xp} />}
-                </AnimatePresence>
+                <Suspense fallback={
+                    <div className="flex items-center justify-center min-h-[60vh]">
+                        <div className="text-center">
+                            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
+                                className="w-10 h-10 rounded-full mx-auto mb-4"
+                                style={{ border: '3px solid rgba(124,58,237,0.2)', borderTopColor: '#7c3aed' }} />
+                            <p className="text-sm" style={{ color: 'rgba(139,92,246,0.6)' }}>로딩 중...</p>
+                        </div>
+                    </div>
+                }>
+                    <AnimatePresence mode="wait">
+                        {currentPhase === 0 && <Phase0 key="p0" persona={persona} onPhaseComplete={() => setPhase(1)} />}
+                        {currentPhase === 1 && <Phase1 key="p1" persona={persona} onPhaseComplete={() => setPhase(2)} sessionId={sessionId} studentId={studentProfile?.studentId} />}
+                        {currentPhase === 2 && <Phase2 key="p2" persona={persona} npcs={currentGroup?.npcs ?? []} />}
+                        {currentPhase === 3 && <Phase3 key="p3" persona={persona} />}
+                        {currentPhase === 4 && <Phase4 key="p4" persona={persona} playerName={name} xp={xp} />}
+                    </AnimatePresence>
+                </Suspense>
             </main>
         </div>
     );

@@ -144,6 +144,7 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
     const [foundTruths, setFoundTruths] = useState<Set<string>>(new Set());
     const [activeTruth, setActiveTruth] = useState<typeof HIDDEN_TRUTHS[0] | null>(null);
     const [submitted, setSubmitted] = useState(false);
+    const [submitError, setSubmitError] = useState(false);
 
     const CANVAS_W = 560;
     const CANVAS_H = 360;
@@ -161,10 +162,13 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
 
     function handleSubmit(analysis: string) {
         setSubmitted(true);
+        setSubmitError(false);
         // Firebase에 리포트 전송 (교사 대시보드에서 확인 가능)
         if (sessionId && studentId) {
             import('@/lib/firebaseService').then(({ StudentService }) => {
-                StudentService.submitReport(sessionId, studentId, analysis).catch(() => {});
+                StudentService.submitReport(sessionId, studentId, analysis).catch(() => {
+                    setSubmitError(true);
+                });
             });
         }
     }
@@ -269,17 +273,29 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
             {submitted && (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                     className="max-w-xl mx-auto rounded-2xl p-6 text-center mt-4"
-                    style={{ background: 'rgba(6,214,160,0.1)', border: '1px solid rgba(6,214,160,0.3)' }}>
-                    <CheckCircle size={40} style={{ color: '#06d6a0', margin: '0 auto 12px' }} />
-                    <h3 className="font-black text-white text-xl mb-2">리포트 제출 완료!</h3>
-                    <p className="text-sm mb-4" style={{ color: 'rgba(6,214,160,0.8)' }}>
-                        교사의 황금 인장 승인을 기다리는 중입니다...
-                    </p>
-                    <div className="flex items-center justify-center gap-2">
-                        <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#06d6a0', animationDelay: '0s' }} />
-                        <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#06d6a0', animationDelay: '0.2s' }} />
-                        <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#06d6a0', animationDelay: '0.4s' }} />
-                    </div>
+                    style={{ background: submitError ? 'rgba(244,63,94,0.1)' : 'rgba(6,214,160,0.1)', border: `1px solid ${submitError ? 'rgba(244,63,94,0.3)' : 'rgba(6,214,160,0.3)'}` }}>
+                    {submitError ? (
+                        <>
+                            <div className="text-4xl mb-3">⚠️</div>
+                            <h3 className="font-black text-white text-xl mb-2">전송 실패</h3>
+                            <p className="text-sm mb-4" style={{ color: 'rgba(244,63,94,0.8)' }}>
+                                리포트가 로컬에 저장되었지만 서버 전송에 실패했습니다. 네트워크를 확인해주세요.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <CheckCircle size={40} style={{ color: '#06d6a0', margin: '0 auto 12px' }} />
+                            <h3 className="font-black text-white text-xl mb-2">리포트 제출 완료!</h3>
+                            <p className="text-sm mb-4" style={{ color: 'rgba(6,214,160,0.8)' }}>
+                                교사의 황금 인장 승인을 기다리는 중입니다...
+                            </p>
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#06d6a0', animationDelay: '0s' }} />
+                                <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#06d6a0', animationDelay: '0.2s' }} />
+                                <div className="w-2 h-2 rounded-full animate-bounce" style={{ background: '#06d6a0', animationDelay: '0.4s' }} />
+                            </div>
+                        </>
+                    )}
                 </motion.div>
             )}
 

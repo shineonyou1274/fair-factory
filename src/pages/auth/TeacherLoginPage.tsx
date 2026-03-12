@@ -58,15 +58,23 @@ export default function TeacherLoginPage() {
             const provider = new GoogleAuthProvider();
             const cred = await signInWithPopup(auth, provider);
             const snap = await getDoc(doc(db, 'teachers', cred.user.uid));
-            const newTeacher: TeacherUser = snap.exists() ? snap.data() as TeacherUser : {
-                uid: cred.user.uid,
-                email: cred.user.email!,
-                displayName: cred.user.displayName ?? '선생님',
-                role: 'teacher',
-                sessions: [],
-                createdAt: Date.now(),
-            };
-            setUser(newTeacher);
+            let teacherData: TeacherUser;
+            if (snap.exists()) {
+                teacherData = snap.data() as TeacherUser;
+            } else {
+                // 첫 Google 로그인: Firestore에 교사 프로필 생성
+                teacherData = {
+                    uid: cred.user.uid,
+                    email: cred.user.email!,
+                    displayName: cred.user.displayName ?? '선생님',
+                    role: 'teacher',
+                    sessions: [],
+                    createdAt: Date.now(),
+                };
+                const { TeacherService } = await import('@/lib/firebaseService');
+                await TeacherService.upsert(cred.user.uid, teacherData);
+            }
+            setUser(teacherData);
             navigate('/teacher/dashboard');
         } catch {
             setError('Google 로그인 중 오류가 발생했습니다.');

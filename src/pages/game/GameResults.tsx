@@ -130,7 +130,7 @@ function SageLiberationStage({ onDone }: { onDone: () => void }) {
                                 onError={e => {
                                     const t = e.target as HTMLImageElement;
                                     t.style.display = 'none';
-                                    t.parentElement!.innerHTML = ['🧙', '🧝', '🧚', '🧌', '🧜'][i];
+                                    t.parentElement!.textContent = ['🧙', '🧝', '🧚', '🧌', '🧜'][i];
                                     t.parentElement!.className = 'text-5xl';
                                 }}
                             />

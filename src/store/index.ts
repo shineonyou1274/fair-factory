@@ -47,16 +47,21 @@ interface SessionState {
     setPhase0Choice: (choice: boolean) => void;
 }
 
-export const useSessionStore = create<SessionState>((set) => ({
-    currentSession: null,
-    currentGroup: null,
-    currentPhase: 0,
-    phase0Choice: null,
-    setSession: (currentSession) => set({ currentSession }),
-    setGroup: (currentGroup) => set({ currentGroup }),
-    setPhase: (currentPhase) => set({ currentPhase }),
-    setPhase0Choice: (choice) => set({ phase0Choice: choice }),
-}));
+export const useSessionStore = create<SessionState>()(
+    persist(
+        (set) => ({
+            currentSession: null,
+            currentGroup: null,
+            currentPhase: 0,
+            phase0Choice: null,
+            setSession: (currentSession) => set({ currentSession }),
+            setGroup: (currentGroup) => set({ currentGroup }),
+            setPhase: (currentPhase) => set({ currentPhase }),
+            setPhase0Choice: (choice) => set({ phase0Choice: choice }),
+        }),
+        { name: 'fair-factory-session' }
+    )
+);
 
 // ─── UI Store ──────────────────────────────────────────────────
 interface UIState {

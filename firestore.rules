@@ -6,14 +6,6 @@ service cloud.firestore {
     function isSignedIn() {
       return request.auth != null;
     }
-    function isTeacher() {
-      return isSignedIn() &&
-        get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.role in ['teacher', 'superadmin'];
-    }
-    function isSuperAdmin() {
-      return isSignedIn() &&
-        get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.role == 'superadmin';
-    }
     function isOwner(uid) {
       return isSignedIn() && request.auth.uid == uid;
     }
@@ -21,58 +13,36 @@ service cloud.firestore {
     // ─── 교사 컬렉션 ─────────────────────────────────────────
     match /teachers/{teacherId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(teacherId) || isSuperAdmin();
+      allow create: if isOwner(teacherId);
+      allow update: if isOwner(teacherId);
     }
 
     // ─── 세션 컬렉션 ─────────────────────────────────────────
-    match /sessions/{sessionId} {
-      // 모든 로그인 사용자가 읽기 가능 (학생이 코드로 찾아야 함)
+    match /sessions/{sessionCode} {
       allow read: if isSignedIn();
-      // 교사만 생성/수정
-      allow create: if isTeacher();
-      allow update: if isTeacher() && resource.data.teacherId == request.auth.uid;
-      allow delete: if isSuperAdmin();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
 
-      // 세션 내 학생 서브컬렉션 — 교사만 전체 읽기, 본인만 쓰기
+      // 세션 내 학생 서브컬렉션
       match /students/{studentId} {
-        allow read: if isTeacher();
-        allow write: if isOwner(studentId) || isTeacher();
+        allow read: if isSignedIn();
+        allow create: if isOwner(studentId);
+        allow update: if isOwner(studentId);
       }
-    }
-
-    // ─── 모둠 컬렉션 ─────────────────────────────────────────
-    match /groups/{groupId} {
-      allow read: if isSignedIn();
-      allow write: if isTeacher();
-    }
-
-    // ─── 학생 활동 컬렉션 ────────────────────────────────────
-    match /studentActivities/{studentId} {
-      // 본인 데이터만 읽기/쓰기, 교사는 전체 읽기 가능
-      allow read: if isOwner(studentId) || isTeacher();
-      allow write: if isOwner(studentId);
     }
 
     // ─── 리포트 컬렉션 ───────────────────────────────────────
     match /reports/{reportId} {
-      // 학생: 본인 리포트만 생성/수정
-      // 교사: 같은 세션 리포트 읽기 + 상태 변경
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.studentId == request.auth.uid;
-      allow update: if isTeacher() || isOwner(resource.data.studentId);
-      allow delete: if isSuperAdmin();
-    }
-
-    // ─── 채팅 메시지 ─────────────────────────────────────────
-    match /chatMessages/{messageId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      allow update, delete: if isSuperAdmin();
+      allow update: if isSignedIn();
     }
 
-    // ─── 관리자 전용 ─────────────────────────────────────────
-    match /adminLogs/{logId} {
-      allow read, write: if isSuperAdmin();
+    // ─── 채팅 로그 ───────────────────────────────────────────
+    match /chatLogs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
     }
   }
 }

@@ -105,10 +105,10 @@ function PhaseControl({
 
 // ─── Student Row ──────────────────────────────────────────────
 function StudentRow({ student, onAwardSeal }: {
-    student: typeof MOCK_STUDENTS[0];
+    student: { id: string; name: string; persona: string; group?: number; submitted?: boolean; xp?: number; goldenSeal?: boolean };
     onAwardSeal: (id: string) => void;
 }) {
-    const color = PERSONA_COLORS[student.persona];
+    const color = PERSONA_COLORS[student.persona] ?? '#a78bfa';
     return (
         <div className="flex items-center gap-3 py-3"
             style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -123,12 +123,12 @@ function StudentRow({ student, onAwardSeal }: {
                         style={{ background: `${color}18`, color, border: `1px solid ${color}28` }}>
                         {student.persona}
                     </span>
-                    <span className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>모둠{student.group}</span>
+                    {student.group && <span className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>모둠{student.group}</span>}
                 </div>
             </div>
             <div className="flex items-center gap-2">
                 <span className="text-xs font-bold" style={{ color: '#fbbf24' }}>
-                    <Zap size={10} className="inline mr-0.5" />{student.xp}
+                    <Zap size={10} className="inline mr-0.5" />{student.xp ?? 0}
                 </span>
                 {student.submitted && (
                     <span className="text-xs px-2 py-0.5 rounded-full"
@@ -190,13 +190,13 @@ export default function SessionControl() {
                 const { SessionService } = await import('@/lib/firebaseService');
                 await SessionService.setPhase(sessionId, newPhase);
             }
-            setLocalPhase(newPhase);
-            setPhase(newPhase);
         } catch (e) {
             console.warn('Phase sync 실패 (로컬 반영):', e);
+        } finally {
+            // 항상 로컬 상태 업데이트 (Firebase 성공/실패 무관)
+            // Zustand persist → localStorage('fair-factory-session') 자동 저장 → 학생 탭 storage event로 동기화
             setLocalPhase(newPhase);
             setPhase(newPhase);
-        } finally {
             setLoading(false);
         }
     }
@@ -289,7 +289,7 @@ export default function SessionControl() {
                 <div className="grid grid-cols-4 gap-3 mb-6">
                     {[
                         { label: '접속 학생', value: studentCount, icon: Users, color: '#a78bfa' },
-                        { label: '제출 완료', value: `${submittedCount}/${MOCK_STUDENTS.length}`, icon: Check, color: '#06d6a0' },
+                        { label: '제출 완료', value: `${submittedCount}/${studentCount}`, icon: Check, color: '#06d6a0' },
                         { label: '황금 인장', value: sealAwarded.size, icon: Award, color: '#fbbf24' },
                         { label: '평균 XP', value: avgXp, icon: Zap, color: '#f5a623' },
                     ].map(({ label, value, icon: Icon, color }) => (
@@ -396,28 +396,23 @@ export default function SessionControl() {
                                     </button>
                                 </div>
                                 <div className="px-6">
-                                    {/* Group headers */}
-                                    {[1, 2].map(g => {
-                                        const members = MOCK_STUDENTS.filter(s => s.group === g);
-                                        return (
-                                            <div key={g}>
-                                                <div className="py-2 mt-3">
-                                                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded-lg"
-                                                        style={{ background: 'rgba(124,58,237,0.15)', color: '#a78bfa' }}>
-                                                        모둠 {g} ({members.length}명)
-                                                    </span>
-                                                </div>
-                                                {members.map(s => (
-                                                    <StudentRow key={s.id} student={s}
-                                                        onAwardSeal={handleAwardSeal} />
-                                                ))}
-                                            </div>
-                                        );
-                                    })}
+                                    {liveStudents.length === 0 ? (
+                                        <div className="text-center py-10">
+                                            <div className="text-4xl mb-3">👀</div>
+                                            <p className="text-sm" style={{ color: 'rgba(167,139,250,0.5)' }}>
+                                                아직 접속한 학생이 없습니다. 학급 코드를 공유하세요!
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        liveStudents.map(s => (
+                                            <StudentRow key={s.id} student={s}
+                                                onAwardSeal={handleAwardSeal} />
+                                        ))
+                                    )}
                                 </div>
                                 <div className="px-6 py-3" style={{ borderTop: '1px solid rgba(139,92,246,0.08)' }}>
                                     <p className="text-xs text-center" style={{ color: 'rgba(139,92,246,0.35)' }}>
-                                        Firebase 연결 시 실시간으로 학생 데이터가 표시됩니다
+                                        {isFirebaseConfigured() ? '✅ 실시간 동기화 중' : '⚠️ 로컬 모드 (Mock 데이터)'}
                                     </p>
                                 </div>
                             </div>
@@ -437,8 +432,8 @@ export default function SessionControl() {
                                     <BarChart3 size={16} style={{ color: '#a78bfa' }} /> 페르소나 분포
                                 </h3>
                                 {Object.entries(PERSONA_COLORS).map(([persona, color]) => {
-                                    const count = MOCK_STUDENTS.filter(s => s.persona === persona).length;
-                                    const pct = Math.round((count / MOCK_STUDENTS.length) * 100);
+                                    const count = liveStudents.filter(s => s.persona === persona).length;
+                                    const pct = liveStudents.length ? Math.round((count / liveStudents.length) * 100) : 0;
                                     return (
                                         <div key={persona} className="mb-3">
                                             <div className="flex items-center justify-between text-xs mb-1">
