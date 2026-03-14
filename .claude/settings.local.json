@@ -9,7 +9,8 @@
       "Bash(find /c/Users/경남교육청/Desktop/fair-factory -name favicon* -o -name *.ico -o -name *manifest*)",
       "Bash(python3 -c \"from PIL import Image; print\\(''PIL available''\\)\")",
       "Bash(python -c \"from PIL import Image; print\\(''PIL available''\\)\")",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(grep -r h-[100dvh] /c/Users/경남교육청/Desktop/fair-factory --include=*.tsx --include=*.ts --include=*.jsx --include=*.js)"
     ]
   }
 }

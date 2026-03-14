@@ -142,10 +142,10 @@ export default function LandingPage() {
     ];
 
     const phases = [
-        { phase: 0, name: '환상의 장막', desc: '달콤한 초콜릿 광고 뒤에 숨겨진 불편한 진실. 마몬의 황금 안대가 세상을 가렸다.', color: '#f43f5e', emoji: '🎭' },
-        { phase: 1, name: '진실의 돋보기', desc: '화면을 문질러 착취의 현장을 파헤쳐라. 고발 리포트를 제출하여 교사의 인장을 받으라.', color: '#f5a623', emoji: '🔍' },
-        { phase: 2, name: '지혜의 토론', desc: '5인의 AI 이해관계자와 협상하라. 당신의 공감 깊이를 AI가 분석하고 점수화한다.', color: '#06d6a0', emoji: '⚖️' },
-        { phase: 3, name: '공정의 설계', desc: '가격 시뮬레이터로 진정한 공정가를 도출하라. 현자들의 황금 안대를 벗겨라.', color: '#a78bfa', emoji: '✨' },
+        { phase: 0, name: '환상의 장막', desc: '마몬이 뿌린 달콤한 초콜릿 광고에 속지 마세요. 페르소나를 선택하고 팀을 구성하여 침묵의 성에 잠입합니다. 🎯 미션: 진실의 현자 구출 준비', color: '#f43f5e', emoji: '🎭' },
+        { phase: 1, name: '진실의 돋보기', desc: '마몬이 감춘 아동 노동, 착취 임금, 산림 파괴 등 5가지 진실을 스크래치로 파헤치세요. 고발 리포트를 작성하여 교사의 황금 인장을 받으세요. 🎯 미션: 정의의 현자 구출', color: '#f5a623', emoji: '🔍' },
+        { phase: 2, name: '지혜의 토론', desc: '유통업자, 농장주, 기업 임원, 협동조합장, 소비자까지 5명의 AI NPC와 협상하세요. 3명 이상 설득하면 다음 단계로! 🎯 미션: 지혜의 현자 구출', color: '#06d6a0', emoji: '⚖️' },
+        { phase: 3, name: '공정의 설계', desc: '가격 시뮬레이터로 농부·유통·기업의 배분율을 직접 조절하여 진정한 공정 가격을 설계하세요. 🎯 미션: 연대·용기의 현자 구출', color: '#a78bfa', emoji: '✨' },
     ];
 
     return (
@@ -330,10 +330,13 @@ export default function LandingPage() {
                         className="text-base sm:text-lg leading-relaxed mb-10 max-w-2xl mx-auto"
                         style={{ color: 'rgba(196,181,253,0.75)' }}
                     >
-                        탐욕의 사이렌 <strong style={{ color: '#f43f5e' }}>마몬</strong>이 황금 사슬로 세상을 침묵의 성에 가뒀습니다.
+                        탐욕의 악마 <strong style={{ color: '#f43f5e' }}>마몬</strong>이 황금 안대로 현자들의 눈을 가리고,
                         <br className="hidden sm:block" />
-                        공정가가 되어 왜곡된 경제 구조를 파헤치고,&nbsp;
-                        <strong style={{ color: '#fbbf24' }}>공정의 노래</strong>로 현자들의 눈을 뜨게 하세요.
+                        거짓 광고와 착취로 세상을 <strong style={{ color: '#f43f5e' }}>침묵의 성</strong>에 가뒀습니다.
+                        <br className="hidden sm:block" />
+                        <span style={{ color: 'rgba(251,191,36,0.9)' }}>5명의 현자를 구출하고 공정의 노래를 되찾을 영웅,</span>
+                        <br className="hidden sm:block" />
+                        <strong style={{ color: '#fbbf24' }}>공정가(公正家)</strong>가 되어 미션을 클리어하세요!
                     </motion.p>
 
                     {/* CTAs */}
@@ -378,9 +381,13 @@ export default function LandingPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.8, delay: 0.6 }}
                     >
-                        <p className="text-xs uppercase tracking-[0.2em] mb-5"
+                        <p className="text-xs uppercase tracking-[0.2em] mb-2"
                             style={{ color: 'rgba(139,92,246,0.5)' }}>
                             ⛓ 침묵의 성에 결박된 현자들 ⛓
+                        </p>
+                        <p className="text-xs mb-5 max-w-md mx-auto leading-relaxed"
+                            style={{ color: 'rgba(196,181,253,0.5)' }}>
+                            마몬이 황금 안대로 눈을 가린 5명의 현자들. 각 Phase를 클리어할 때마다 현자 한 명의 안대가 벗겨집니다.
                         </p>
                         <div className="flex items-start justify-center gap-4 sm:gap-8">
                             {sages.map((s, i) => (
@@ -420,7 +427,7 @@ export default function LandingPage() {
                         { value: '4단계', label: '게임 페이즈', icon: '🎮' },
                         { value: '5인', label: '페르소나 역할', icon: '🎭' },
                         { value: '5명', label: 'AI 협상 NPC', icon: '🤝' },
-                        { value: 'PWA', label: '설치형 앱 지원', icon: '📱' },
+                        { value: '5인', label: '결박된 현자', icon: '⛓' },
                     ].map(({ value, label, icon }) => (
                         <div key={label}>
                             <div className="text-2xl mb-1">{icon}</div>
@@ -434,6 +441,45 @@ export default function LandingPage() {
                         </div>
                     ))}
                 </div>
+            </section>
+
+            {/* ════════════════════════════════════════════
+          VILLAIN STORY — 마몬
+      ════════════════════════════════════════════ */}
+            <section className="py-20 px-6 max-w-4xl mx-auto" aria-labelledby="villain-title">
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="rounded-3xl overflow-hidden relative"
+                    style={{ background: 'linear-gradient(135deg, rgba(244,63,94,0.08), rgba(10,6,24,0.95))', border: '1px solid rgba(244,63,94,0.2)' }}
+                >
+                    <div className="flex flex-col sm:flex-row items-center gap-6 p-8 sm:p-10">
+                        <div className="flex-shrink-0">
+                            <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden"
+                                style={{ border: '2px solid rgba(244,63,94,0.4)', boxShadow: '0 0 30px rgba(244,63,94,0.2)' }}>
+                                <img src="/boss/mamon.png" alt="마몬 - 탐욕의 악마"
+                                    className="w-full h-full object-cover"
+                                    style={{ filter: 'saturate(1.3) contrast(1.1)' }} />
+                            </div>
+                        </div>
+                        <div className="text-center sm:text-left">
+                            <h2 id="villain-title" className="text-2xl sm:text-3xl font-black mb-3">
+                                <span style={{ color: '#f43f5e' }}>마몬</span>
+                                <span className="text-white"> — 탐욕의 악마</span>
+                            </h2>
+                            <p className="text-sm leading-relaxed mb-3" style={{ color: 'rgba(196,181,253,0.75)' }}>
+                                마몬은 <strong style={{ color: '#fbbf24' }}>황금 안대</strong>로 현자들의 눈을 가리고,
+                                달콤한 광고로 소비자를 속이며 불공정한 무역 구조를 유지합니다.
+                                농부들의 땀을 착취하고, 아이들의 교육 기회를 빼앗으며,
+                                모든 진실을 <strong style={{ color: '#f43f5e' }}>침묵의 성</strong> 깊숙이 감추었습니다.
+                            </p>
+                            <p className="text-sm font-bold" style={{ color: 'rgba(251,191,36,0.9)' }}>
+                                공정가여, 마몬의 거짓을 파헤치고 현자들을 구출하세요!
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
             </section>
 
             {/* ════════════════════════════════════════════
@@ -455,7 +501,7 @@ export default function LandingPage() {
                         }}>게임 흐름</span>
                     </h2>
                     <p style={{ color: 'rgba(167,139,250,0.6)' }}>
-                        4개의 Phase를 거쳐 황금 안대를 벗겨라
+                        4개의 Phase를 클리어하여 현자들의 황금 안대를 벗겨라
                     </p>
                     <ChainLinks className="justify-center mt-6" />
                 </motion.div>

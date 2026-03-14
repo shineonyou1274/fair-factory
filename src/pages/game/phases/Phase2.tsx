@@ -382,7 +382,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="h-[100dvh] flex flex-col max-w-3xl mx-auto px-4 pt-2 pb-3 relative overflow-x-hidden">
+            className="h-[calc(100dvh-56px)] flex flex-col max-w-3xl mx-auto px-4 pt-2 pb-3 relative overflow-x-hidden">
             {/* Phase 2 배경 */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <img src="/phases/phase2-bg.png" alt="" className="w-full h-full object-cover"
@@ -492,7 +492,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
 
             {/* Chat area */}
             <div className="flex-1 rounded-2xl p-4 overflow-y-auto mb-4"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)', minHeight: 120, maxHeight: 'calc(100dvh - 400px)' }}>
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)', minHeight: 120, maxHeight: 'calc(100dvh - 360px)' }}>
                 {chatHistory.map((msg, i) => <ChatBubble key={i} msg={msg} />)}
                 {sending && (
                     <div className="flex items-center gap-2 text-xs mb-4" style={{ color: 'rgba(167,139,250,0.5)' }}>

@@ -139,6 +139,9 @@ function ReportForm({
 }
 
 // ─── Phase 1 Main ─────────────────────────────────────────────
+const BASE_W = 560;
+const BASE_H = 360;
+
 export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props) {
     const [scratchProgress, setScratchProgress] = useState(0);
     const [foundTruths, setFoundTruths] = useState<Set<string>>(new Set());
@@ -146,8 +149,24 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
     const [submitted, setSubmitted] = useState(false);
     const [submitError, setSubmitError] = useState(false);
 
-    const CANVAS_W = 560;
-    const CANVAS_H = 360;
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [canvasSize, setCanvasSize] = useState({ w: BASE_W, h: BASE_H });
+
+    useEffect(() => {
+        function measure() {
+            if (!containerRef.current) return;
+            const cw = containerRef.current.clientWidth;
+            const w = Math.min(cw, BASE_W);
+            const h = Math.round(w * (BASE_H / BASE_W));
+            setCanvasSize({ w, h });
+        }
+        measure();
+        window.addEventListener('resize', measure);
+        return () => window.removeEventListener('resize', measure);
+    }, []);
+
+    const CANVAS_W = canvasSize.w;
+    const CANVAS_H = canvasSize.h;
 
     // Discover truth when scratch reveals its position
     useEffect(() => {
@@ -198,8 +217,8 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
             </div>
 
             {/* Scratch Area */}
-            <div className="relative rounded-2xl overflow-hidden mx-auto mb-2"
-                style={{ width: '100%', maxWidth: CANVAS_W, aspectRatio: `${CANVAS_W}/${CANVAS_H}` }}>
+            <div ref={containerRef} className="relative rounded-2xl overflow-hidden mx-auto mb-2"
+                style={{ width: '100%', maxWidth: BASE_W, aspectRatio: `${BASE_W}/${BASE_H}` }}>
                 {/* Background: real image */}
                 <div className="absolute inset-0 rounded-2xl overflow-hidden"
                     style={{ background: 'linear-gradient(135deg, #1a0a2e, #0d1a3a)' }}>
