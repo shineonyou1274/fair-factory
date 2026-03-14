@@ -604,63 +604,47 @@ export default function LandingPage() {
             {/* ════════════════════════════════════════════
           NPC SECTION
       ════════════════════════════════════════════ */}
-            <section className="py-24 px-6 max-w-5xl mx-auto" aria-labelledby="npc-title">
+            <section className="py-16 px-6 max-w-5xl mx-auto" aria-labelledby="npc-title">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="text-center mb-14"
+                    className="text-center mb-10"
                 >
-                    <h2 id="npc-title" className="text-4xl font-black mb-4 text-white">협상 상대 NPC</h2>
-                    <p style={{ color: 'rgba(167,139,250,0.6)' }}>
-                        5명 중 3명 이상 설득 시 공정의 설계 단계로 진입
+                    <h2 id="npc-title" className="text-3xl font-black mb-3 text-white">Phase 2 협상 상대</h2>
+                    <p className="text-sm" style={{ color: 'rgba(167,139,250,0.6)' }}>
+                        5명의 AI NPC와 대화하여 3명 이상 설득하세요. 각 NPC의 성격과 공략법은 게임 내에서 확인!
                     </p>
                 </motion.div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
                     {[
-                        { name: '고렉스', sub: 'Gorex', role: '대형 유통업자', agenda: '마진 40% 사수', weakness: '농장주 대비 3배 수익 비교 지적', color: '#f43f5e', img: '/npcs/gorex.png' },
-                        { name: '티에라', sub: 'Tierra', role: '소규모 농장주', agenda: '빚더미, 인증비 부담', weakness: '인증 지원 제도 정보 제공 시 협력 전환', color: '#fb923c', img: '/npcs/tierra.png' },
-                        { name: '맥스웰', sub: 'Maxwell', role: '다국적 기업 임원', agenda: 'CSR로 이미지 세탁 중', weakness: 'CSR 보고서 vs 실제 데이터 불일치 고발', color: '#fbbf24', img: '/npcs/maxwell.png' },
-                        { name: '아마라', sub: 'Amara', role: '현지 협동조합장', agenda: '공정무역 신봉, 설득 어려움', weakness: '윈윈 모델 제안 시 연대 즉시 선언', color: '#06d6a0', img: '/npcs/amara.png' },
-                        { name: '김현주', sub: 'Kim', role: '소비자 대표', agenda: '"비싼 제품은 사치"', weakness: '가격차가 200원임을 감성적으로 전달', color: '#38bdf8', img: '/npcs/kim.png' },
+                        { name: '고렉스', role: '유통업자', color: '#f43f5e', img: '/npcs/gorex.png' },
+                        { name: '티에라', role: '농장주', color: '#fb923c', img: '/npcs/tierra.png' },
+                        { name: '맥스웰', role: '기업 임원', color: '#fbbf24', img: '/npcs/maxwell.png' },
+                        { name: '아마라', role: '협동조합장', color: '#06d6a0', img: '/npcs/amara.png' },
+                        { name: '김현주', role: '소비자', color: '#38bdf8', img: '/npcs/kim.png' },
                     ].map((npc, i) => (
                         <motion.div
                             key={npc.name}
-                            initial={{ opacity: 0, y: 30 }}
+                            initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: i * 0.1 }}
+                            transition={{ duration: 0.4, delay: i * 0.08 }}
                             viewport={{ once: true }}
-                            className="rounded-2xl overflow-hidden group"
+                            className="rounded-2xl p-4 text-center group cursor-default"
                             style={{
-                                background: `linear-gradient(180deg, ${npc.color}12, rgba(10,6,24,0.8))`,
+                                background: `linear-gradient(135deg, ${npc.color}0d, ${npc.color}05)`,
                                 border: `1px solid ${npc.color}25`,
                             }}
                         >
-                            <div className="relative h-48 overflow-hidden flex items-center justify-center"
-                                style={{ background: `radial-gradient(circle at 50% 80%, ${npc.color}20, transparent 70%)` }}>
-                                <img
-                                    src={npc.img}
-                                    alt={npc.name}
-                                    className="h-44 w-auto object-contain drop-shadow-lg transition-transform duration-500 group-hover:scale-110"
-                                    loading="lazy"
-                                />
+                            <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2 rounded-full overflow-hidden"
+                                style={{ border: `2px solid ${npc.color}40`, boxShadow: `0 0 12px ${npc.color}20` }}>
+                                <img src={npc.img} alt={npc.name}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                    loading="lazy" />
                             </div>
-                            <div className="p-4 space-y-3">
-                                <div className="text-center">
-                                    <div className="font-black text-white text-lg">{npc.name}</div>
-                                    <div className="text-xs opacity-40 text-white">{npc.sub}</div>
-                                    <div className="text-xs font-medium mt-1" style={{ color: npc.color }}>{npc.role}</div>
-                                </div>
-                                <div className="space-y-2 text-xs" style={{ color: 'rgba(167,139,250,0.7)' }}>
-                                    <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                                        <span className="opacity-50">숨겨진 의도</span><br />{npc.agenda}
-                                    </div>
-                                    <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                                        <span className="opacity-50">약점</span><br />{npc.weakness}
-                                    </div>
-                                </div>
-                            </div>
+                            <div className="font-black text-white text-sm">{npc.name}</div>
+                            <div className="text-xs mt-0.5" style={{ color: npc.color }}>{npc.role}</div>
                         </motion.div>
                     ))}
                 </div>

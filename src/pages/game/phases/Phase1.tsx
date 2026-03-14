@@ -98,8 +98,8 @@ function ReportForm({
     const [text, setText] = useState('');
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl p-6 mt-6"
-            style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.2)' }}>
+            className="rounded-2xl p-6 mt-6 relative z-20"
+            style={{ background: 'rgba(15,10,40,0.92)', border: '1px solid rgba(245,166,35,0.3)' }}>
             <h3 className="font-black text-white mb-3 flex items-center gap-2">
                 <FileText size={16} style={{ color: '#fbbf24' }} />
                 고발 리포트 작성
@@ -273,14 +273,14 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
                 {activeTruth && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                        className="max-w-xl mx-auto rounded-2xl p-5 mb-5"
-                        style={{ background: `${activeTruth.color}10`, border: `1px solid ${activeTruth.color}30` }}
+                        className="max-w-xl mx-auto rounded-2xl p-5 mb-5 relative z-20"
+                        style={{ background: `rgba(15,10,40,0.92)`, border: `1px solid ${activeTruth.color}50`, boxShadow: `0 0 20px ${activeTruth.color}20` }}
                     >
                         <div className="flex items-start gap-4">
                             <div className="text-3xl">{activeTruth.emoji}</div>
                             <div>
                                 <h4 className="font-black text-white mb-1">{activeTruth.label}</h4>
-                                <p className="text-sm leading-relaxed" style={{ color: 'rgba(196,181,253,0.75)' }}>{activeTruth.desc}</p>
+                                <p className="text-sm leading-relaxed" style={{ color: 'rgba(196,181,253,0.85)' }}>{activeTruth.desc}</p>
                             </div>
                         </div>
                     </motion.div>
@@ -297,8 +297,8 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
             {/* Submitted state */}
             {submitted && (
                 <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                    className="max-w-xl mx-auto rounded-2xl p-6 text-center mt-4"
-                    style={{ background: submitError ? 'rgba(244,63,94,0.1)' : 'rgba(6,214,160,0.1)', border: `1px solid ${submitError ? 'rgba(244,63,94,0.3)' : 'rgba(6,214,160,0.3)'}` }}>
+                    className="max-w-xl mx-auto rounded-2xl p-6 text-center mt-4 relative z-20"
+                    style={{ background: submitError ? 'rgba(15,10,40,0.92)' : 'rgba(15,10,40,0.92)', border: `1px solid ${submitError ? 'rgba(244,63,94,0.3)' : 'rgba(6,214,160,0.3)'}` }}>
                     {submitError ? (
                         <>
                             <div className="text-4xl mb-3">⚠️</div>
@@ -325,7 +325,7 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
             )}
 
             {foundList.length < 3 && (
-                <p className="text-center text-xs mt-4" style={{ color: 'rgba(139,92,246,0.35)' }}>
+                <p className="text-center text-xs mt-4 relative z-20" style={{ color: 'rgba(139,92,246,0.35)' }}>
                     최소 3개 이상 발견 시 고발 리포트를 제출할 수 있습니다
                 </p>
             )}

@@ -262,7 +262,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    const [profileOpen, setProfileOpen] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(true);
     const npc = npcs.find(n => n.id === selectedNpc)!;
     const chatHistory = messages[selectedNpc] ?? [];
     const action = ACTION_CARDS[persona];

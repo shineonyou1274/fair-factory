@@ -273,72 +273,102 @@ class AudioManager {
     }
 
 
-    // 🔮 수정구슬 — 신비로운 상승 톤 + 반짝임
+    // 🔮 수정구슬 — 긴장감 있는 드론 + 점점 빨라지는 틱
     private _synthCrystal(vol: number) {
         const now = this.ctx.currentTime;
-        // 낮은 패드음 (신비로운 느낌)
-        const pad = this.ctx.createOscillator();
-        const padG = this.ctx.createGain();
-        pad.connect(padG); padG.connect(this.ctx.destination);
-        pad.type = 'sine';
-        pad.frequency.setValueAtTime(220, now);
-        pad.frequency.exponentialRampToValueAtTime(440, now + 1.5);
-        padG.gain.setValueAtTime(0, now);
-        padG.gain.linearRampToValueAtTime(vol * 0.25, now + 0.3);
-        padG.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
-        pad.start(now); pad.stop(now + 1.6);
-        // 반짝이는 높은 음 (글리산도)
-        [523, 659, 784, 988, 1175].forEach((freq, i) => {
-            const delay = i * 0.15;
+        const dur = 3.5;
+        // 저음 드론 (불안한 긴장감)
+        const drone = this.ctx.createOscillator();
+        const droneG = this.ctx.createGain();
+        drone.connect(droneG); droneG.connect(this.ctx.destination);
+        drone.type = 'sine';
+        drone.frequency.setValueAtTime(110, now);
+        drone.frequency.linearRampToValueAtTime(165, now + dur); // 서서히 상승
+        droneG.gain.setValueAtTime(0, now);
+        droneG.gain.linearRampToValueAtTime(vol * 0.3, now + 0.5);
+        droneG.gain.setValueAtTime(vol * 0.3, now + dur - 0.3);
+        droneG.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+        drone.start(now); drone.stop(now + dur + 0.1);
+        // 두 번째 드론 (5도 위, 불협화 긴장)
+        const drone2 = this.ctx.createOscillator();
+        const drone2G = this.ctx.createGain();
+        drone2.connect(drone2G); drone2G.connect(this.ctx.destination);
+        drone2.type = 'triangle';
+        drone2.frequency.setValueAtTime(164, now);
+        drone2.frequency.linearRampToValueAtTime(220, now + dur);
+        drone2G.gain.setValueAtTime(0, now);
+        drone2G.gain.linearRampToValueAtTime(vol * 0.15, now + 1.0);
+        drone2G.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+        drone2.start(now); drone2.stop(now + dur + 0.1);
+        // 점점 빨라지는 틱 사운드 (심장박동 느낌)
+        const tickCount = 16;
+        for (let i = 0; i < tickCount; i++) {
+            // 간격이 점점 줄어듦: 0.4s → 0.08s
+            const t = (i / tickCount);
+            const delay = t * t * dur * 0.85; // 가속 곡선
             const g = this.ctx.createGain();
             g.connect(this.ctx.destination);
             g.gain.setValueAtTime(0, now + delay);
-            g.gain.linearRampToValueAtTime(vol * 0.2, now + delay + 0.03);
-            g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.4);
-            const o = this.ctx.createOscillator();
-            o.connect(g); o.type = 'triangle';
-            o.frequency.setValueAtTime(freq, now + delay);
-            o.start(now + delay); o.stop(now + delay + 0.45);
-        });
-    }
-
-    // ✨ 캐릭터 공개 — 화려한 팡파르 + 임팩트
-    private _synthReveal(vol: number) {
-        const now = this.ctx.currentTime;
-        // 임팩트 저음
-        const bass = this.ctx.createOscillator();
-        const bassG = this.ctx.createGain();
-        bass.connect(bassG); bassG.connect(this.ctx.destination);
-        bass.type = 'sine';
-        bass.frequency.setValueAtTime(80, now);
-        bass.frequency.exponentialRampToValueAtTime(60, now + 0.5);
-        bassG.gain.setValueAtTime(vol * 0.6, now);
-        bassG.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
-        bass.start(now); bass.stop(now + 0.55);
-        // 상승 팡파르 (도-미-솔-도-미)
-        [523, 659, 784, 1047, 1319].forEach((freq, i) => {
-            const delay = 0.05 + i * 0.1;
-            const g = this.ctx.createGain();
-            g.connect(this.ctx.destination);
-            g.gain.setValueAtTime(0, now + delay);
-            g.gain.linearRampToValueAtTime(vol * 0.45, now + delay + 0.04);
-            g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.6);
-            const o = this.ctx.createOscillator();
-            o.connect(g); o.type = i < 3 ? 'sine' : 'triangle';
-            o.frequency.setValueAtTime(freq, now + delay);
-            o.start(now + delay); o.stop(now + delay + 0.65);
-        });
-        // 서스테인 코드
-        [1047, 1319].forEach(freq => {
-            const g = this.ctx.createGain();
-            g.connect(this.ctx.destination);
-            g.gain.setValueAtTime(0, now + 0.6);
-            g.gain.linearRampToValueAtTime(vol * 0.35, now + 0.65);
-            g.gain.exponentialRampToValueAtTime(0.0001, now + 1.8);
+            g.gain.linearRampToValueAtTime(vol * (0.15 + t * 0.25), now + delay + 0.01);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 0.08);
             const o = this.ctx.createOscillator();
             o.connect(g); o.type = 'sine';
-            o.frequency.setValueAtTime(freq, now + 0.6);
-            o.start(now + 0.6); o.stop(now + 1.9);
+            o.frequency.setValueAtTime(800 + t * 600, now + delay); // 피치도 상승
+            o.start(now + delay); o.stop(now + delay + 0.1);
+        }
+    }
+
+    // ✨ 캐릭터 공개 — 신성한 차임 + 부드러운 패드 코드
+    private _synthReveal(vol: number) {
+        const now = this.ctx.currentTime;
+        // 부드러운 패드 코드 (C장조 화음: C4-E4-G4)
+        [262, 330, 392].forEach((freq, i) => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.connect(g); g.connect(this.ctx.destination);
+            o.type = 'sine';
+            o.frequency.setValueAtTime(freq, now);
+            g.gain.setValueAtTime(0, now);
+            g.gain.linearRampToValueAtTime(vol * 0.2, now + 0.3 + i * 0.1);
+            g.gain.setValueAtTime(vol * 0.2, now + 1.5);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 3.0);
+            o.start(now); o.stop(now + 3.1);
+        });
+        // 높은 벨/차임 음 (신성한 느낌)
+        const chimes = [1047, 1319, 1568, 2093]; // C5-E5-G5-C6
+        chimes.forEach((freq, i) => {
+            const delay = 0.1 + i * 0.2;
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.connect(g); g.connect(this.ctx.destination);
+            o.type = 'sine';
+            o.frequency.setValueAtTime(freq, now + delay);
+            g.gain.setValueAtTime(0, now + delay);
+            g.gain.linearRampToValueAtTime(vol * 0.3, now + delay + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + delay + 1.5);
+            o.start(now + delay); o.stop(now + delay + 1.6);
+            // 옥타브 위 하모닉 (공명감)
+            const h = this.ctx.createOscillator();
+            const hg = this.ctx.createGain();
+            h.connect(hg); hg.connect(this.ctx.destination);
+            h.type = 'sine';
+            h.frequency.setValueAtTime(freq * 2, now + delay);
+            hg.gain.setValueAtTime(0, now + delay);
+            hg.gain.linearRampToValueAtTime(vol * 0.08, now + delay + 0.02);
+            hg.gain.exponentialRampToValueAtTime(0.0001, now + delay + 1.0);
+            h.start(now + delay); h.stop(now + delay + 1.1);
+        });
+        // 마지막 서스테인 화음 (장엄한 마무리)
+        [523, 659, 784].forEach(freq => {
+            const o = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            o.connect(g); g.connect(this.ctx.destination);
+            o.type = 'triangle';
+            o.frequency.setValueAtTime(freq, now + 1.0);
+            g.gain.setValueAtTime(0, now + 1.0);
+            g.gain.linearRampToValueAtTime(vol * 0.15, now + 1.3);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + 3.5);
+            o.start(now + 1.0); o.stop(now + 3.6);
         });
     }
 
