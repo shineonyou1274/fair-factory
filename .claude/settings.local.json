@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/경남교育청/Desktop/fair-factory/src/store/**)",
+      "Bash(npm outdated:*)",
+      "Bash(grep -r \"password\\\\|secret\\\\|token\" /c/Users/경남교육청/Desktop/fair-factory/.env*)",
+      "Bash(npm audit:*)",
+      "Bash(find /c/Users/경남교육청/Desktop/fair-factory -maxdepth 2 -name .env* -o -name FIREBASE*)",
+      "Bash(find /c/Users/경남교육청/Desktop/fair-factory -name favicon* -o -name *.ico -o -name *manifest*)",
+      "Bash(python3 -c \"from PIL import Image; print\\(''PIL available''\\)\")",
+      "Bash(python -c \"from PIL import Image; print\\(''PIL available''\\)\")",
+      "Bash(pip install:*)"
+    ]
+  }
+}

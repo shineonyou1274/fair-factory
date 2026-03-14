@@ -35,12 +35,13 @@ function FloatingCoin({ style }: { style: React.CSSProperties }) {
     );
 }
 
-// ─── Glowing Orb (imprisoned sage) ───────────────────────────
+// ─── Sage Portrait (imprisoned sage) ─────────────────────────
 function SageOrb({
     index, name, color,
 }: {
     index: number; name: string; color: string;
 }) {
+    const imgSrc = `/sages/sage${index + 1}.png`;
     return (
         <motion.div
             initial={{ scale: 0, opacity: 0 }}
@@ -49,23 +50,25 @@ function SageOrb({
             className="flex flex-col items-center gap-2 group cursor-default"
         >
             <div
-                className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center"
+                className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center overflow-hidden"
                 style={{
-                    background: `radial-gradient(circle at 40% 35%, ${color}33, ${color}11)`,
-                    border: `1.5px solid ${color}55`,
-                    boxShadow: `0 0 18px ${color}44, inset 0 0 12px ${color}22`,
+                    border: `2px solid ${color}55`,
+                    boxShadow: `0 0 20px ${color}44, inset 0 0 12px ${color}22`,
                     animation: `float ${3.5 + index * 0.3}s ease-in-out infinite`,
                     animationDelay: `${index * 0.4}s`,
                 }}
             >
-                {/* Blindfold bar */}
-                <div
-                    className="absolute w-9 h-2 rounded-full"
-                    style={{ background: `linear-gradient(90deg, ${color}99, ${color}cc, ${color}99)` }}
+                <img src={imgSrc} alt={name}
+                    className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
+                    style={{ filter: 'brightness(0.5) saturate(0.3)' }}
                 />
-                <span className="text-xl relative z-10">😶</span>
+                {/* Blindfold overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-10 h-1.5 rounded-full"
+                        style={{ background: `linear-gradient(90deg, ${color}aa, ${color}dd, ${color}aa)`, boxShadow: `0 0 8px ${color}66` }} />
+                </div>
             </div>
-            <span className="text-[10px] sm:text-xs text-center leading-tight"
+            <span className="text-[10px] sm:text-xs text-center leading-tight font-medium"
                 style={{ color: `${color}99` }}>
                 {name}
             </span>
@@ -175,7 +178,7 @@ export default function LandingPage() {
                         <button
                             onClick={() => navigate('/teacher/login')}
                             aria-label="교사 로그인 - Game Master로 수업 진행하기"
-                            className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-purple-200 hover:text-white border border-purple-500/30 hover:border-purple-400/60 hover:bg-purple-500/10 transition-all"
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-purple-200 hover:text-white border border-purple-500/30 hover:border-purple-400/60 hover:bg-purple-500/10 transition-all"
                         >
                             <GraduationCap size={15} /> 교사 로그인
                         </button>
@@ -358,7 +361,7 @@ export default function LandingPage() {
                             }}
                         >
                             <Sparkles size={20} />
-                            30분으로 세상을 바꾸는 수업 시작하기
+                            30분으로 세상을 바꾸는 수업 시작하기 (학생용)
                             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                         </button>
                         <button
@@ -383,7 +386,7 @@ export default function LandingPage() {
                             }}
                         >
                             <GraduationCap size={18} />
-                            Game Master 입장
+                            Game Master 입장 (교사용)
                         </button>
                     </motion.div>
 
@@ -551,35 +554,49 @@ export default function LandingPage() {
                     </p>
                 </motion.div>
 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {[
-                        { name: '😈 고렉스 (Gorex)', role: '대형 유통업자', agenda: '마진 40% 사수', weakness: '농장주 대비 3배 수익 비교 지적', color: '#f43f5e' },
-                        { name: '😔 티에라 (Tierra)', role: '소규모 농장주', agenda: '빚더미, 인증비 부담', weakness: '인증 지원 제도 정보 제공 시 협력 전환', color: '#fb923c' },
-                        { name: '🏢 맥스웰 (Maxwell)', role: '다국적 기업 임원', agenda: 'CSR로 이미지 세탁 중', weakness: 'CSR 보고서 vs 실제 데이터 불일치 고발', color: '#fbbf24' },
-                        { name: '🌱 아마라 (Amara)', role: '현지 협동조합장', agenda: '공정무역 신봉, 설득 어려움', weakness: '윈윈 모델 제안 시 연대 즉시 선언', color: '#06d6a0' },
-                        { name: '🛒 김현주 (Kim)', role: '소비자 대표', agenda: '"비싼 제품은 사치"', weakness: '가격차가 200원임을 감성적으로 전달', color: '#38bdf8' },
+                        { name: '고렉스', sub: 'Gorex', role: '대형 유통업자', agenda: '마진 40% 사수', weakness: '농장주 대비 3배 수익 비교 지적', color: '#f43f5e', img: '/npcs/gorex.png' },
+                        { name: '티에라', sub: 'Tierra', role: '소규모 농장주', agenda: '빚더미, 인증비 부담', weakness: '인증 지원 제도 정보 제공 시 협력 전환', color: '#fb923c', img: '/npcs/tierra.png' },
+                        { name: '맥스웰', sub: 'Maxwell', role: '다국적 기업 임원', agenda: 'CSR로 이미지 세탁 중', weakness: 'CSR 보고서 vs 실제 데이터 불일치 고발', color: '#fbbf24', img: '/npcs/maxwell.png' },
+                        { name: '아마라', sub: 'Amara', role: '현지 협동조합장', agenda: '공정무역 신봉, 설득 어려움', weakness: '윈윈 모델 제안 시 연대 즉시 선언', color: '#06d6a0', img: '/npcs/amara.png' },
+                        { name: '김현주', sub: 'Kim', role: '소비자 대표', agenda: '"비싼 제품은 사치"', weakness: '가격차가 200원임을 감성적으로 전달', color: '#38bdf8', img: '/npcs/kim.png' },
                     ].map((npc, i) => (
                         <motion.div
                             key={npc.name}
-                            initial={{ opacity: 0, x: -30 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            transition={{ duration: 0.4, delay: i * 0.08 }}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: i * 0.1 }}
                             viewport={{ once: true }}
-                            className="rounded-xl p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+                            className="rounded-2xl overflow-hidden group"
                             style={{
-                                background: `linear-gradient(135deg, ${npc.color}0a, transparent)`,
-                                borderLeft: `3px solid ${npc.color}60`,
-                                border: `1px solid ${npc.color}18`,
-                                borderLeftWidth: '3px',
+                                background: `linear-gradient(180deg, ${npc.color}12, rgba(10,6,24,0.8))`,
+                                border: `1px solid ${npc.color}25`,
                             }}
                         >
-                            <div className="flex-shrink-0 sm:w-48">
-                                <div className="font-bold text-white text-sm">{npc.name}</div>
-                                <div className="text-xs" style={{ color: npc.color }}>{npc.role}</div>
+                            <div className="relative h-48 overflow-hidden flex items-center justify-center"
+                                style={{ background: `radial-gradient(circle at 50% 80%, ${npc.color}20, transparent 70%)` }}>
+                                <img
+                                    src={npc.img}
+                                    alt={npc.name}
+                                    className="h-44 w-auto object-contain drop-shadow-lg transition-transform duration-500 group-hover:scale-110"
+                                    loading="lazy"
+                                />
                             </div>
-                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" style={{ color: 'rgba(167,139,250,0.7)' }}>
-                                <div><span className="opacity-50">숨겨진 의도</span><br />{npc.agenda}</div>
-                                <div><span className="opacity-50">약점</span><br />{npc.weakness}</div>
+                            <div className="p-4 space-y-3">
+                                <div className="text-center">
+                                    <div className="font-black text-white text-lg">{npc.name}</div>
+                                    <div className="text-xs opacity-40 text-white">{npc.sub}</div>
+                                    <div className="text-xs font-medium mt-1" style={{ color: npc.color }}>{npc.role}</div>
+                                </div>
+                                <div className="space-y-2 text-xs" style={{ color: 'rgba(167,139,250,0.7)' }}>
+                                    <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                                        <span className="opacity-50">숨겨진 의도</span><br />{npc.agenda}
+                                    </div>
+                                    <div className="rounded-lg p-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                                        <span className="opacity-50">약점</span><br />{npc.weakness}
+                                    </div>
+                                </div>
                             </div>
                         </motion.div>
                     ))}

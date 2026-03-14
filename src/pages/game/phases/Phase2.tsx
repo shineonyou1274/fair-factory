@@ -262,7 +262,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    const [profileOpen, setProfileOpen] = useState(true);
+    const [profileOpen, setProfileOpen] = useState(false);
     const npc = npcs.find(n => n.id === selectedNpc)!;
     const chatHistory = messages[selectedNpc] ?? [];
     const action = ACTION_CARDS[persona];
@@ -382,7 +382,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="min-h-screen flex flex-col max-w-3xl mx-auto px-4 py-6 relative">
+            className="h-[100dvh] flex flex-col max-w-3xl mx-auto px-4 pt-2 pb-3 relative overflow-x-hidden">
             {/* Phase 2 배경 */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <img src="/phases/phase2-bg.png" alt="" className="w-full h-full object-cover"
@@ -391,8 +391,8 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
             </div>
 
             {/* Header */}
-            <div className="text-center mb-5">
-                <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest"
+            <div className="text-center mb-2">
+                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
                     style={{ background: 'rgba(6,214,160,0.15)', border: '1px solid rgba(6,214,160,0.3)', color: '#06d6a0' }}>
                     Phase 2 · 지혜의 토론
                 </span>
@@ -404,7 +404,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
             </div>
 
             {/* NPC Selector */}
-            <div className="mb-3">
+            <div className="mb-2">
                 <NpcSelector npcs={npcs} selected={selectedNpc} onSelect={setSelectedNpc} />
             </div>
 
@@ -492,7 +492,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
 
             {/* Chat area */}
             <div className="flex-1 rounded-2xl p-4 overflow-y-auto mb-4"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)', minHeight: 320, maxHeight: 420 }}>
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)', minHeight: 120, maxHeight: 'calc(100dvh - 400px)' }}>
                 {chatHistory.map((msg, i) => <ChatBubble key={i} msg={msg} />)}
                 {sending && (
                     <div className="flex items-center gap-2 text-xs mb-4" style={{ color: 'rgba(167,139,250,0.5)' }}>

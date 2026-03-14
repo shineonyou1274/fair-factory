@@ -15,6 +15,11 @@ interface Margins {
 
 const FAIR_TRADE_MIN = 2800;  // 공정무역 최저 보장가 (원)
 
+const PERSONA_COLORS: Record<string, string> = {
+    Alpha: '#38bdf8', Delta: '#06d6a0', Omega: '#a78bfa',
+    Lambda: '#fb923c', Sigma: '#f43f5e',
+};
+
 // 신호등 3단계 판정
 type FairLevel = 'unfair' | 'partial' | 'fair';
 
@@ -51,7 +56,7 @@ function SliderRow({ label, value, min, max, color, unit = '%', onChange, hint }
     color: string; unit?: string; onChange: (v: number) => void; hint?: string;
 }) {
     return (
-        <div className="mb-3">
+        <div className="mb-4 pb-4" style={{ borderBottom: '1px solid rgba(139,92,246,0.1)' }}>
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-white">{label}</span>
@@ -160,7 +165,7 @@ export default function Phase3({ persona }: Props) {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="min-h-screen px-4 py-8 max-w-4xl mx-auto relative">
+            className="min-h-screen px-4 py-8 pb-40 max-w-4xl mx-auto relative z-10 overflow-x-hidden overflow-y-auto">
             {/* Phase 3 배경 */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <img src="/phases/phase3-bg.png" alt="" className="w-full h-full object-cover"
@@ -174,6 +179,9 @@ export default function Phase3({ persona }: Props) {
                     style={{ background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', color: '#a78bfa' }}>
                     <TrendingUp size={12} /> Phase 3 · 공정의 설계
                 </span>
+                <img src={`/personas/${persona.toLowerCase()}.png`} alt={persona}
+                    className="w-20 h-20 mx-auto mb-3 rounded-full object-cover"
+                    style={{ border: `3px solid ${PERSONA_COLORS[persona] ?? '#a78bfa'}`, boxShadow: `0 0 20px ${PERSONA_COLORS[persona] ?? '#a78bfa'}40` }} />
                 <h2 className="text-3xl font-black text-white mb-2">최적의 공정가를 설계하라</h2>
                 <p style={{ color: 'rgba(196,181,253,0.6)' }}>
                     슬라이더를 조작하여 모두가 납득할 수 있는 가격 구조를 만드세요
@@ -187,79 +195,101 @@ export default function Phase3({ persona }: Props) {
             </div>
 
             <div className="space-y-6">
-                {/* ── 상단: 결과 패널 (sticky) ── */}
-                <div className="lg:sticky lg:top-16 z-10 space-y-4">
-                    {/* Price Display — 신호등 3단계 */}
-                    <motion.div
-                        className="rounded-2xl p-6 text-center"
-                        animate={{
-                            background: levelCfg.bg,
-                            borderColor: levelCfg.border,
-                        }}
-                        style={{ border: `2px solid ${levelCfg.border}` }}
-                        transition={{ duration: 0.4 }}
-                    >
-                        <div className="text-xs font-bold mb-1 uppercase tracking-wider"
-                            style={{ color: 'rgba(196,181,253,0.5)' }}>최종 소비자가</div>
-                        <motion.div
-                            key={finalPrice}
-                            initial={{ scale: 1.2 }}
-                            animate={{ scale: 1 }}
-                            className="text-5xl font-black mb-2"
-                            style={{ color: levelCfg.color }}
-                        >
-                            ₩{finalPrice.toLocaleString()}
-                        </motion.div>
-                        <div className="flex items-center justify-center gap-3 text-sm flex-wrap">
-                            <span style={{ color: 'rgba(196,181,253,0.5)' }}>공정무역 최저가: ₩{FAIR_TRADE_MIN.toLocaleString()}</span>
-                            <motion.span
-                                key={fairLevel}
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
+                {/* ── 실시간 가격 미니 패널 (상단 고정) ── */}
+                <motion.div
+                    className="rounded-2xl p-4 text-center"
+                    animate={{ background: levelCfg.bg, borderColor: levelCfg.border }}
+                    style={{ border: `2px solid ${levelCfg.border}`, backdropFilter: 'blur(12px)' }}
+                    transition={{ duration: 0.4 }}
+                >
+                    <div className="flex items-center justify-center gap-4 flex-wrap">
+                        <div>
+                            <div className="text-xs font-bold uppercase tracking-wider" style={{ color: 'rgba(196,181,253,0.5)' }}>최종 소비자가</div>
+                            <motion.div key={finalPrice} initial={{ scale: 1.15 }} animate={{ scale: 1 }}
+                                className="text-4xl font-black" style={{ color: levelCfg.color }}>
+                                ₩{finalPrice.toLocaleString()}
+                            </motion.div>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                            <motion.span key={fairLevel} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                                 className="px-3 py-1 rounded-full text-xs font-black"
-                                style={{ background: `${levelCfg.color}25`, color: levelCfg.color, border: `1px solid ${levelCfg.color}50` }}
-                            >
+                                style={{ background: `${levelCfg.color}25`, color: levelCfg.color, border: `1px solid ${levelCfg.color}50` }}>
                                 {levelCfg.emoji} {levelCfg.label}
                             </motion.span>
+                            <span className="text-xs" style={{ color: 'rgba(196,181,253,0.4)' }}>최저가 ₩{FAIR_TRADE_MIN.toLocaleString()}</span>
                         </div>
-                    </motion.div>
-
-                    {/* Fair Score */}
-                    <div className="rounded-2xl p-5"
-                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)' }}>
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-sm font-bold text-white">공정 지수</span>
+                        <div className="text-center">
+                            <div className="text-xs" style={{ color: 'rgba(196,181,253,0.4)' }}>공정 지수</div>
                             <span className="font-black text-xl" style={{ color: fairScore >= 70 ? '#06d6a0' : fairScore >= 40 ? '#f5a623' : '#f43f5e' }}>
                                 {fairScore}/100
                             </span>
                         </div>
-                        <div className="h-3 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                            <motion.div className="h-full rounded-full"
-                                animate={{ width: `${fairScore}%` }}
-                                style={{ background: fairScore >= 70 ? 'linear-gradient(90deg, #06d6a0, #38bdf8)' : fairScore >= 40 ? 'linear-gradient(90deg, #f5a623, #fbbf24)' : 'linear-gradient(90deg, #f43f5e, #f97316)' }}
-                                transition={{ duration: 0.6 }} />
-                        </div>
-                        <div className="flex justify-between text-xs mt-2" style={{ color: 'rgba(139,92,246,0.4)' }}>
-                            <span>착취</span><span>보통</span><span>공정</span>
-                        </div>
                     </div>
+                </motion.div>
 
+                {/* ── 슬라이더 패널 (메인 조작부) ── */}
+                <div className="rounded-2xl p-6"
+                    style={{ background: 'rgba(15,10,40,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(139,92,246,0.2)' }}>
+                    <h3 className="font-black text-white mb-5 flex items-center gap-2">
+                        🎛️ 가격 조절 패널
+                    </h3>
+
+                    <SliderRow label="카카오 원가" value={margins.farmCost} min={300} max={1500} unit="원"
+                        color="#06d6a0" onChange={set('farmCost')}
+                        hint="농장에서 카카오 1kg 생산에 드는 원가" />
+                    <SliderRow label="농장주 마진" value={margins.farmerMargin} min={5} max={50}
+                        color="#06d6a0" onChange={set('farmerMargin')}
+                        hint="농장주의 수익률 (현실: 3~8%)" />
+                    <SliderRow label="협동조합 마진" value={margins.coopMargin} min={2} max={30}
+                        color="#38bdf8" onChange={set('coopMargin')}
+                        hint="공정무역 협동조합의 운영비 및 공동 기금" />
+                    <SliderRow label="유통업자 마진" value={margins.distMargin} min={5} max={60}
+                        color="#f5a623" onChange={set('distMargin')}
+                        hint="유통업자 마진 (현실: 35~45%)" />
+                    <SliderRow label="소매상 마진" value={margins.retailMargin} min={10} max={50}
+                        color="#a78bfa" onChange={set('retailMargin')}
+                        hint="슈퍼마켓 등 소매상의 수익률" />
+
+                    {/* 실제 데이터 비교 카드 */}
+                    <div className="mt-2 rounded-xl p-4 text-xs space-y-2"
+                        style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.2)' }}>
+                        <div className="font-bold text-white mb-2 flex items-center gap-1">
+                            📊 실제 초콜릿 수익 분배 (2023 기준)
+                        </div>
+                        {[
+                            { who: '🌱 카카오 농장주', real: '3~6%', fair: '15% 이상', color: '#06d6a0' },
+                            { who: '🏭 유통·제조사', real: '35~45%', fair: '25% 이하', color: '#f5a623' },
+                            { who: '🏪 소매상', real: '20~30%', fair: '20~25%', color: '#a78bfa' },
+                        ].map(d => (
+                            <div key={d.who} className="flex items-center gap-2">
+                                <span className="flex-1" style={{ color: 'rgba(196,181,253,0.7)' }}>{d.who}</span>
+                                <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(244,63,94,0.15)', color: '#f43f5e' }}>현실 {d.real}</span>
+                                <span className="px-1.5 py-0.5 rounded" style={{ background: `${d.color}20`, color: d.color }}>목표 {d.fair}</span>
+                            </div>
+                        ))}
+                        <p className="mt-2" style={{ color: 'rgba(139,92,246,0.5)' }}>
+                            * 농장주 몫이 15% 이상 + 최종가 ₩2,800 이상이면 공정 인증 기준 충족!
+                        </p>
+                    </div>
+                </div>
+
+                {/* ── 결과 패널 ── */}
+                <div className="space-y-4">
                     {/* Distribution Bar */}
                     <div className="rounded-2xl p-5"
-                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)' }}>
+                        style={{ background: 'rgba(15,10,40,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(139,92,246,0.2)' }}>
                         <h4 className="text-sm font-bold text-white mb-4">수익 분배율</h4>
                         <DistBar shares={shares} />
                     </div>
 
-                    {/* Farmer Income — 바 차트 포함 */}
+                    {/* Farmer Income */}
                     <div className="rounded-2xl p-4"
-                        style={{ background: 'rgba(6,214,160,0.06)', border: '1px solid rgba(6,214,160,0.2)' }}>
+                        style={{ background: 'rgba(6,214,160,0.08)', backdropFilter: 'blur(12px)', border: '1px solid rgba(6,214,160,0.25)' }}>
                         <div className="text-xs mb-1" style={{ color: 'rgba(6,214,160,0.7)' }}>농장주 실수령액 (per 초콜릿)</div>
                         <div className="text-2xl font-black" style={{ color: '#06d6a0' }}>
                             ₩{Math.round(margins.farmCost * (margins.farmerMargin / 100)).toLocaleString()}
                             <span className="text-sm font-normal ml-2" style={{ color: 'rgba(6,214,160,0.6)' }}>({Math.round(shares.farmerGet)}%)</span>
                         </div>
-                        {/* 농장주 몫 진행 바 */}
                         <div className="mt-3 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                             <motion.div
                                 className="h-full rounded-full"
@@ -301,52 +331,6 @@ export default function Phase3({ persona }: Props) {
                             </div>
                         </motion.div>
                     )}
-                </div>
-
-                {/* ── 하단: 슬라이더 패널 ── */}
-                <div className="rounded-2xl p-6"
-                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)' }}>
-                    <h3 className="font-black text-white mb-4 flex items-center gap-2">
-                        🎛️ 가격 조절 패널
-                    </h3>
-
-                    <SliderRow label="카카오 원가" value={margins.farmCost} min={300} max={1500} unit="원"
-                        color="#06d6a0" onChange={set('farmCost')}
-                        hint="농장에서 카카오 1kg 생산에 드는 원가" />
-                    <SliderRow label="농장주 마진" value={margins.farmerMargin} min={5} max={50}
-                        color="#06d6a0" onChange={set('farmerMargin')}
-                        hint="농장주의 수익률 (현실: 3~8%)" />
-                    <SliderRow label="협동조합 마진" value={margins.coopMargin} min={2} max={30}
-                        color="#38bdf8" onChange={set('coopMargin')}
-                        hint="공정무역 협동조합의 운영비 및 공동 기금" />
-                    <SliderRow label="유통업자 마진" value={margins.distMargin} min={5} max={60}
-                        color="#f5a623" onChange={set('distMargin')}
-                        hint="유통업자 마진 (현실: 35~45%)" />
-                    <SliderRow label="소매상 마진" value={margins.retailMargin} min={10} max={50}
-                        color="#a78bfa" onChange={set('retailMargin')}
-                        hint="슈퍼마켓 등 소매상의 수익률" />
-
-                    {/* 실제 데이터 비교 카드 */}
-                    <div className="mt-2 rounded-xl p-4 text-xs space-y-2"
-                        style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.2)' }}>
-                        <div className="font-bold text-white mb-2 flex items-center gap-1">
-                            📊 실제 초콜릿 수익 분배 (2023 기준)
-                        </div>
-                        {[
-                            { who: '🌱 카카오 농장주', real: '3~6%', fair: '15% 이상', color: '#06d6a0' },
-                            { who: '🏭 유통·제조사', real: '35~45%', fair: '25% 이하', color: '#f5a623' },
-                            { who: '🏪 소매상', real: '20~30%', fair: '20~25%', color: '#a78bfa' },
-                        ].map(d => (
-                            <div key={d.who} className="flex items-center gap-2">
-                                <span className="flex-1" style={{ color: 'rgba(196,181,253,0.7)' }}>{d.who}</span>
-                                <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(244,63,94,0.15)', color: '#f43f5e' }}>현실 {d.real}</span>
-                                <span className="px-1.5 py-0.5 rounded" style={{ background: `${d.color}20`, color: d.color }}>목표 {d.fair}</span>
-                            </div>
-                        ))}
-                        <p className="mt-2" style={{ color: 'rgba(139,92,246,0.5)' }}>
-                            * 농장주 몫이 15% 이상 + 최종가 ₩2,800 이상이면 공정 인증 기준 충족!
-                        </p>
-                    </div>
                 </div>
             </div>
 

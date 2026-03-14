@@ -35,6 +35,10 @@ class AudioManager {
         // 첫 사용자 인터랙션 감지 (브라우저 자동재생 정책 대응)
         const onInteract = () => {
             this.userInteracted = true;
+            // AudioContext가 suspended 상태일 수 있으므로 resume
+            if (this._ctx && this._ctx.state === 'suspended') {
+                this._ctx.resume();
+            }
             if (this.pendingBGM) {
                 this._startBGM(this.pendingBGM);
                 this.pendingBGM = null;
@@ -83,16 +87,23 @@ class AudioManager {
 
         const audio = new Audio(path);
         audio.loop = true;
-        audio.volume = 0; // 0부터 시작하여 페이드 인
-        audio.play().catch(() => {
-            // 자동재생 차단 시 조용히 무시
-        });
+        audio.volume = 0;
+        audio.preload = 'auto';
+
+        const startPlayback = () => {
+            audio.play().catch(() => { /* 자동재생 차단 시 무시 */ });
+            this._fadeIn(audio, this.muted ? 0 : this.bgmVolume, 800);
+        };
+
+        // 버퍼링 완료 후 재생 시작
+        if (audio.readyState >= 3) {
+            startPlayback();
+        } else {
+            audio.addEventListener('canplaythrough', startPlayback, { once: true });
+        }
 
         this.bgmAudio = audio;
         this.currentBGM = path;
-
-        // 2초에 걸쳐 부드럽게 페이드 인 (갑작스러운 재생 방지)
-        this._fadeIn(audio, this.muted ? 0 : this.bgmVolume, 2000);
     }
 
     stopBGM() {

@@ -25,7 +25,7 @@ function ScratchCanvas({
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
         // Fill with dark overlay
         ctx.fillStyle = 'rgba(15, 10, 40, 0.95)';
@@ -53,7 +53,7 @@ function ScratchCanvas({
     function scratch(pos: { x: number; y: number }) {
         const canvas = canvasRef.current;
         if (!canvas) return;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         if (!ctx) return;
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
@@ -177,7 +177,7 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="min-h-screen px-4 py-8 max-w-3xl mx-auto relative">
+            className="min-h-screen px-4 py-8 pb-32 max-w-3xl mx-auto relative z-10">
             {/* Phase 1 배경 */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <img src="/phases/phase1-bg.png" alt="" className="w-full h-full object-cover"
