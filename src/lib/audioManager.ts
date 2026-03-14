@@ -79,10 +79,11 @@ class AudioManager {
     }
 
     private _startBGM(path: string) {
-        // 페이드 아웃 후 교체
+        // 이전 BGM 즉시 정지 (겹침 방지)
         if (this.bgmAudio) {
-            const old = this.bgmAudio;
-            this._fadeOut(old, 800, () => old.pause());
+            this.bgmAudio.pause();
+            this.bgmAudio.src = '';
+            this.bgmAudio = null;
         }
 
         const audio = new Audio(path);
@@ -90,29 +91,29 @@ class AudioManager {
         audio.volume = 0;
         audio.preload = 'auto';
 
+        this.bgmAudio = audio;
+        this.currentBGM = path;
+
         const startPlayback = () => {
+            // 교체된 경우 재생하지 않음
+            if (this.bgmAudio !== audio) return;
             audio.play().catch(() => { /* 자동재생 차단 시 무시 */ });
             this._fadeIn(audio, this.muted ? 0 : this.bgmVolume, 800);
         };
 
-        // 버퍼링 완료 후 재생 시작
         if (audio.readyState >= 3) {
             startPlayback();
         } else {
             audio.addEventListener('canplaythrough', startPlayback, { once: true });
         }
-
-        this.bgmAudio = audio;
-        this.currentBGM = path;
     }
 
     stopBGM() {
         if (this.bgmAudio) {
-            this._fadeOut(this.bgmAudio, 600, () => {
-                this.bgmAudio?.pause();
-                this.bgmAudio = null;
-                this.currentBGM = null;
-            });
+            this.bgmAudio.pause();
+            this.bgmAudio.src = '';
+            this.bgmAudio = null;
+            this.currentBGM = null;
         }
     }
 
@@ -121,6 +122,9 @@ class AudioManager {
 
     private get ctx(): AudioContext {
         if (!this._ctx) this._ctx = new AudioContext();
+        if (this._ctx.state === 'suspended' && this.userInteracted) {
+            this._ctx.resume();
+        }
         return this._ctx;
     }
 
@@ -394,20 +398,6 @@ class AudioManager {
                 clearInterval(timer);
             } else {
                 audio.volume = Math.min(audio.volume + step, target);
-            }
-        }, 50);
-    }
-
-    private _fadeOut(audio: HTMLAudioElement, ms: number, onDone: () => void) {
-        const initial = audio.volume;
-        const step = initial / (ms / 50);
-        const timer = setInterval(() => {
-            if (audio.volume - step <= 0) {
-                audio.volume = 0;
-                clearInterval(timer);
-                onDone();
-            } else {
-                audio.volume = Math.max(audio.volume - step, 0);
             }
         }, 50);
     }

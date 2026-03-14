@@ -92,34 +92,49 @@ function SliderRow({ label, value, min, max, color, unit = '%', onChange, hint }
     );
 }
 
-// ─── Distribution Bar ─────────────────────────────────────────
-function DistBar({ shares }: { shares: ReturnType<typeof calcShares> }) {
+// ─── Pie Chart (CSS conic-gradient) ──────────────────────────
+function PieChart({ shares, fairScore, levelCfg }: {
+    shares: ReturnType<typeof calcShares>;
+    fairScore: number;
+    levelCfg: { emoji: string; label: string; color: string };
+}) {
     const items = [
         { label: '농장주', pct: shares.farmerGet, color: '#06d6a0' },
         { label: '협동조합', pct: shares.coopGet, color: '#38bdf8' },
         { label: '유통업자', pct: shares.distGet, color: '#f5a623' },
         { label: '소매상', pct: shares.retailGet, color: '#a78bfa' },
     ];
+
+    // Build conic-gradient stops
+    let cumulative = 0;
+    const stops = items.map(item => {
+        const start = cumulative;
+        cumulative += item.pct;
+        return `${item.color} ${start}% ${cumulative}%`;
+    }).join(', ');
+
     return (
-        <div>
-            <div className="flex rounded-xl overflow-hidden h-8 mb-3">
-                {items.map(item => (
-                    <motion.div key={item.label}
-                        animate={{ flex: Math.max(0.5, item.pct) }}
-                        transition={{ duration: 0.5 }}
-                        className="flex items-center justify-center text-xs font-black text-white overflow-hidden"
-                        style={{ background: item.color, minWidth: 2 }}
-                    >
-                        {item.pct > 8 ? `${Math.round(item.pct)}%` : ''}
-                    </motion.div>
-                ))}
+        <div className="flex flex-col items-center gap-4">
+            {/* Pie */}
+            <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full flex-shrink-0"
+                style={{ background: `conic-gradient(${stops})`, boxShadow: '0 0 30px rgba(139,92,246,0.2)' }}>
+                {/* Inner circle with score */}
+                <div className="absolute inset-4 rounded-full flex flex-col items-center justify-center"
+                    style={{ background: 'rgba(15,10,40,0.95)' }}>
+                    <div className="text-xs" style={{ color: 'rgba(196,181,253,0.5)' }}>공정 지수</div>
+                    <div className="text-2xl font-black" style={{ color: fairScore >= 70 ? '#06d6a0' : fairScore >= 40 ? '#f5a623' : '#f43f5e' }}>
+                        {fairScore}
+                    </div>
+                    <div className="text-xs font-bold" style={{ color: levelCfg.color }}>{levelCfg.emoji} {levelCfg.label}</div>
+                </div>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            {/* Legend */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
                 {items.map(item => (
-                    <div key={item.label} className="text-center">
-                        <div className="w-2.5 h-2.5 rounded-full mx-auto mb-1" style={{ background: item.color }} />
-                        <div className="text-xs" style={{ color: 'rgba(196,181,253,0.6)' }}>{item.label}</div>
-                        <div className="text-xs font-black" style={{ color: item.color }}>{Math.round(item.pct)}%</div>
+                    <div key={item.label} className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                        <span style={{ color: 'rgba(196,181,253,0.7)' }}>{item.label}</span>
+                        <span className="font-black ml-auto" style={{ color: item.color }}>{Math.round(item.pct)}%</span>
                     </div>
                 ))}
             </div>
@@ -194,41 +209,37 @@ export default function Phase3({ persona }: Props) {
                 )}
             </div>
 
-            <div className="space-y-6">
-                {/* ── 실시간 가격 미니 패널 (상단 고정) ── */}
-                <motion.div
-                    className="rounded-2xl p-4 text-center"
-                    animate={{ background: levelCfg.bg, borderColor: levelCfg.border }}
-                    style={{ border: `2px solid ${levelCfg.border}`, backdropFilter: 'blur(12px)' }}
-                    transition={{ duration: 0.4 }}
-                >
-                    <div className="flex items-center justify-center gap-4 flex-wrap">
-                        <div>
-                            <div className="text-xs font-bold uppercase tracking-wider" style={{ color: 'rgba(196,181,253,0.5)' }}>최종 소비자가</div>
-                            <motion.div key={finalPrice} initial={{ scale: 1.15 }} animate={{ scale: 1 }}
-                                className="text-4xl font-black" style={{ color: levelCfg.color }}>
-                                ₩{finalPrice.toLocaleString()}
-                            </motion.div>
-                        </div>
-                        <div className="flex flex-col items-center gap-1">
-                            <motion.span key={fairLevel} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                                className="px-3 py-1 rounded-full text-xs font-black"
-                                style={{ background: `${levelCfg.color}25`, color: levelCfg.color, border: `1px solid ${levelCfg.color}50` }}>
-                                {levelCfg.emoji} {levelCfg.label}
-                            </motion.span>
-                            <span className="text-xs" style={{ color: 'rgba(196,181,253,0.4)' }}>최저가 ₩{FAIR_TRADE_MIN.toLocaleString()}</span>
-                        </div>
-                        <div className="text-center">
-                            <div className="text-xs" style={{ color: 'rgba(196,181,253,0.4)' }}>공정 지수</div>
-                            <span className="font-black text-xl" style={{ color: fairScore >= 70 ? '#06d6a0' : fairScore >= 40 ? '#f5a623' : '#f43f5e' }}>
-                                {fairScore}/100
-                            </span>
-                        </div>
+            {/* ── 실시간 가격 미니 패널 ── */}
+            <motion.div
+                className="rounded-2xl p-4 text-center mb-6"
+                animate={{ background: levelCfg.bg, borderColor: levelCfg.border }}
+                style={{ border: `2px solid ${levelCfg.border}`, backdropFilter: 'blur(12px)' }}
+                transition={{ duration: 0.4 }}
+            >
+                <div className="flex items-center justify-center gap-6 flex-wrap">
+                    <div>
+                        <div className="text-xs font-bold uppercase tracking-wider" style={{ color: 'rgba(196,181,253,0.5)' }}>최종 소비자가</div>
+                        <motion.div key={finalPrice} initial={{ scale: 1.15 }} animate={{ scale: 1 }}
+                            className="text-4xl font-black" style={{ color: levelCfg.color }}>
+                            ₩{finalPrice.toLocaleString()}
+                        </motion.div>
                     </div>
-                </motion.div>
+                    <motion.span key={fairLevel} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                        className="px-3 py-1 rounded-full text-xs font-black"
+                        style={{ background: `${levelCfg.color}25`, color: levelCfg.color, border: `1px solid ${levelCfg.color}50` }}>
+                        {levelCfg.emoji} {levelCfg.label}
+                    </motion.span>
+                    <div className="text-xs" style={{ color: 'rgba(196,181,253,0.4)' }}>
+                        농장주 <strong style={{ color: shares.farmerGet >= 15 ? '#06d6a0' : '#f43f5e' }}>{Math.round(shares.farmerGet)}%</strong>
+                        <span className="ml-2">최저가 ₩{FAIR_TRADE_MIN.toLocaleString()}</span>
+                    </div>
+                </div>
+            </motion.div>
 
-                {/* ── 슬라이더 패널 (메인 조작부) ── */}
-                <div className="rounded-2xl p-6"
+            {/* ── 메인 그리드: 슬라이더(2/3) + 파이차트(1/3) ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                {/* 슬라이더 패널 (2/3) */}
+                <div className="lg:col-span-2 rounded-2xl p-6"
                     style={{ background: 'rgba(15,10,40,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(139,92,246,0.2)' }}>
                     <h3 className="font-black text-white mb-5 flex items-center gap-2">
                         🎛️ 가격 조절 패널
@@ -250,88 +261,70 @@ export default function Phase3({ persona }: Props) {
                         color="#a78bfa" onChange={set('retailMargin')}
                         hint="슈퍼마켓 등 소매상의 수익률" />
 
-                    {/* 실제 데이터 비교 카드 */}
+                    {/* 실제 데이터 비교 */}
                     <div className="mt-2 rounded-xl p-4 text-xs space-y-2"
                         style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.2)' }}>
-                        <div className="font-bold text-white mb-2 flex items-center gap-1">
-                            📊 실제 초콜릿 수익 분배 (2023 기준)
-                        </div>
+                        <div className="font-bold text-white mb-2">📊 실제 수익 분배 (2023)</div>
                         {[
-                            { who: '🌱 카카오 농장주', real: '3~6%', fair: '15% 이상', color: '#06d6a0' },
-                            { who: '🏭 유통·제조사', real: '35~45%', fair: '25% 이하', color: '#f5a623' },
+                            { who: '🌱 농장주', real: '3~6%', fair: '15%↑', color: '#06d6a0' },
+                            { who: '🏭 유통사', real: '35~45%', fair: '25%↓', color: '#f5a623' },
                             { who: '🏪 소매상', real: '20~30%', fair: '20~25%', color: '#a78bfa' },
                         ].map(d => (
                             <div key={d.who} className="flex items-center gap-2">
                                 <span className="flex-1" style={{ color: 'rgba(196,181,253,0.7)' }}>{d.who}</span>
-                                <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(244,63,94,0.15)', color: '#f43f5e' }}>현실 {d.real}</span>
-                                <span className="px-1.5 py-0.5 rounded" style={{ background: `${d.color}20`, color: d.color }}>목표 {d.fair}</span>
+                                <span className="px-1.5 py-0.5 rounded" style={{ background: 'rgba(244,63,94,0.15)', color: '#f43f5e' }}>{d.real}</span>
+                                <span className="px-1.5 py-0.5 rounded" style={{ background: `${d.color}20`, color: d.color }}>{d.fair}</span>
                             </div>
                         ))}
-                        <p className="mt-2" style={{ color: 'rgba(139,92,246,0.5)' }}>
-                            * 농장주 몫이 15% 이상 + 최종가 ₩2,800 이상이면 공정 인증 기준 충족!
-                        </p>
                     </div>
                 </div>
 
-                {/* ── 결과 패널 ── */}
-                <div className="space-y-4">
-                    {/* Distribution Bar */}
-                    <div className="rounded-2xl p-5"
-                        style={{ background: 'rgba(15,10,40,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(139,92,246,0.2)' }}>
-                        <h4 className="text-sm font-bold text-white mb-4">수익 분배율</h4>
-                        <DistBar shares={shares} />
-                    </div>
+                {/* 파이차트 패널 (1/3) */}
+                <div className="lg:col-span-1 rounded-2xl p-6 flex flex-col items-center justify-center"
+                    style={{ background: 'rgba(15,10,40,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(139,92,246,0.2)' }}>
+                    <h4 className="text-sm font-bold text-white mb-4">수익 분배율</h4>
+                    <PieChart shares={shares} fairScore={fairScore} levelCfg={levelCfg} />
 
-                    {/* Farmer Income */}
-                    <div className="rounded-2xl p-4"
-                        style={{ background: 'rgba(6,214,160,0.08)', backdropFilter: 'blur(12px)', border: '1px solid rgba(6,214,160,0.25)' }}>
-                        <div className="text-xs mb-1" style={{ color: 'rgba(6,214,160,0.7)' }}>농장주 실수령액 (per 초콜릿)</div>
-                        <div className="text-2xl font-black" style={{ color: '#06d6a0' }}>
+                    {/* 농장주 수입 */}
+                    <div className="w-full mt-5 rounded-xl p-3"
+                        style={{ background: 'rgba(6,214,160,0.08)', border: '1px solid rgba(6,214,160,0.2)' }}>
+                        <div className="text-xs" style={{ color: 'rgba(6,214,160,0.7)' }}>농장주 실수령액</div>
+                        <div className="text-xl font-black" style={{ color: '#06d6a0' }}>
                             ₩{Math.round(margins.farmCost * (margins.farmerMargin / 100)).toLocaleString()}
-                            <span className="text-sm font-normal ml-2" style={{ color: 'rgba(6,214,160,0.6)' }}>({Math.round(shares.farmerGet)}%)</span>
                         </div>
-                        <div className="mt-3 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                            <motion.div
-                                className="h-full rounded-full"
-                                animate={{ width: `${Math.min(100, (shares.farmerGet / 30) * 100)}%` }}
-                                style={{ background: shares.farmerGet >= 15 ? 'linear-gradient(90deg,#06d6a0,#38bdf8)' : 'linear-gradient(90deg,#f43f5e,#f97316)' }}
-                                transition={{ duration: 0.5 }}
-                            />
-                        </div>
-                        <div className="flex justify-between text-xs mt-1" style={{ color: 'rgba(6,214,160,0.5)' }}>
-                            <span>목표: 15% 이상</span>
-                            <span style={{ color: shares.farmerGet >= 15 ? '#06d6a0' : '#f43f5e', fontWeight: 'bold' }}>
-                                현재: {Math.round(shares.farmerGet)}%{shares.farmerGet >= 15 ? ' ✓' : ' ✗'}
-                            </span>
+                        <div className="text-xs mt-1" style={{ color: shares.farmerGet >= 15 ? '#06d6a0' : '#f43f5e' }}>
+                            {shares.farmerGet >= 15 ? '✓ 공정 기준 충족' : '✗ 목표 15% 미달'}
                         </div>
                     </div>
-
-                    {/* Submit */}
-                    {!submitted ? (
-                        <motion.button
-                            whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
-                            onClick={handleSubmit}
-                            className="w-full py-5 rounded-2xl font-black text-lg text-white flex items-center justify-center gap-3 transition-all"
-                            style={{
-                                background: isFair ? 'linear-gradient(135deg, #06d6a0, #059669)' : 'linear-gradient(135deg, #7c3aed, #5b21b6)',
-                                boxShadow: isFair ? '0 0 30px rgba(6,214,160,0.5)' : '0 0 25px rgba(124,58,237,0.4)',
-                            }}
-                        >
-                            <Sparkles size={22} />
-                            {isFair ? '🌟 공정가 확정 & 제출!' : '현재 가격으로 제출하기'}
-                        </motion.button>
-                    ) : (
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                            className="rounded-2xl p-5 text-center"
-                            style={{ background: 'rgba(6,214,160,0.1)', border: '1px solid rgba(6,214,160,0.35)' }}>
-                            <Check size={32} style={{ color: '#06d6a0', margin: '0 auto 8px' }} />
-                            <div className="font-black text-white text-lg mb-1">제출 완료!</div>
-                            <div className="text-xs" style={{ color: 'rgba(6,214,160,0.8)' }}>
-                                교사의 최종 승인을 기다리는 중...
-                            </div>
-                        </motion.div>
-                    )}
                 </div>
+            </div>
+
+            {/* ── 제출 버튼 ── */}
+            <div className="mt-6">
+                {!submitted ? (
+                    <motion.button
+                        whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.97 }}
+                        onClick={handleSubmit}
+                        className="w-full py-5 rounded-2xl font-black text-lg text-white flex items-center justify-center gap-3 transition-all"
+                        style={{
+                            background: isFair ? 'linear-gradient(135deg, #06d6a0, #059669)' : 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                            boxShadow: isFair ? '0 0 30px rgba(6,214,160,0.5)' : '0 0 25px rgba(124,58,237,0.4)',
+                        }}
+                    >
+                        <Sparkles size={22} />
+                        {isFair ? '🌟 공정가 확정 & 제출!' : '현재 가격으로 제출하기'}
+                    </motion.button>
+                ) : (
+                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+                        className="rounded-2xl p-5 text-center"
+                        style={{ background: 'rgba(6,214,160,0.1)', border: '1px solid rgba(6,214,160,0.35)' }}>
+                        <Check size={32} style={{ color: '#06d6a0', margin: '0 auto 8px' }} />
+                        <div className="font-black text-white text-lg mb-1">제출 완료!</div>
+                        <div className="text-xs" style={{ color: 'rgba(6,214,160,0.8)' }}>
+                            교사의 최종 승인을 기다리는 중...
+                        </div>
+                    </motion.div>
+                )}
             </div>
 
             {/* ── Sage Liberation Animation ── */}

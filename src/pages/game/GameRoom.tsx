@@ -252,6 +252,14 @@ export default function GameRoom() {
     const baseXp = Object.values(studentProfile?.xp ?? {}).reduce((a, b) => a + b, 0);
     const xp = baseXp + localXp;
 
+    // ── 새 게임 진입 시 Phase 0으로 초기화 (persist된 이전 값 방지) ──
+    useEffect(() => {
+        if (!isFirebaseConfigured()) {
+            setPhase(0);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     // ── Real-time phase sync from Firebase RTDB ──────────────────
     useEffect(() => {
         if (!isFirebaseConfigured() || !sessionId) return;

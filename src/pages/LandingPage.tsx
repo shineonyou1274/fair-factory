@@ -346,18 +346,10 @@ export default function LandingPage() {
                         <button
                             onClick={() => navigate('/join')}
                             aria-label="학생으로 게임 참여하기 - 공정가로 합류"
-                            className="group flex items-center gap-3 px-10 py-4 rounded-2xl font-black text-lg text-white w-full sm:w-auto justify-center transition-all duration-300"
+                            className="group flex items-center gap-3 px-10 py-4 rounded-2xl font-black text-lg text-white w-full sm:w-auto justify-center transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
                             style={{
                                 background: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
                                 boxShadow: '0 0 30px rgba(124,58,237,0.5), 0 4px 20px rgba(0,0,0,0.4)',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.boxShadow = '0 0 50px rgba(124,58,237,0.8), 0 4px 30px rgba(0,0,0,0.5)';
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.boxShadow = '0 0 30px rgba(124,58,237,0.5), 0 4px 20px rgba(0,0,0,0.4)';
-                                e.currentTarget.style.transform = 'translateY(0)';
                             }}
                         >
                             <Sparkles size={20} />
@@ -367,22 +359,12 @@ export default function LandingPage() {
                         <button
                             onClick={() => navigate('/teacher/login')}
                             aria-label="교사 로그인 - Game Master로 수업 진행하기"
-                            className="flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-base w-full sm:w-auto justify-center transition-all duration-300"
+                            className="flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-base w-full sm:w-auto justify-center transition-all duration-300 hover:brightness-125 active:scale-95"
                             style={{
                                 background: 'rgba(245,162,35,0.12)',
                                 border: '1.5px solid rgba(245,162,35,0.4)',
                                 color: '#fbbf24',
                                 backdropFilter: 'blur(10px)',
-                            }}
-                            onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(245,162,35,0.22)';
-                                e.currentTarget.style.borderColor = 'rgba(245,162,35,0.8)';
-                                e.currentTarget.style.boxShadow = '0 0 25px rgba(245,162,35,0.35)';
-                            }}
-                            onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(245,162,35,0.12)';
-                                e.currentTarget.style.borderColor = 'rgba(245,162,35,0.4)';
-                                e.currentTarget.style.boxShadow = 'none';
                             }}
                         >
                             <GraduationCap size={18} />
@@ -506,13 +488,13 @@ export default function LandingPage() {
                         </p>
                     </motion.div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                         {[
-                            { name: '알파', title: '분석가', emoji: '📊', color: '#38bdf8', desc: '팩트 체크, 경제 수치 분석' },
-                            { name: '델타', title: '중재자', emoji: '🕊️', color: '#06d6a0', desc: '갈등 완화, 이견 조율' },
-                            { name: '오메가', title: '설계자', emoji: '💡', color: '#a78bfa', desc: '윈윈 모델 창의적 제안' },
-                            { name: '람다', title: '치유사', emoji: '💚', color: '#fb923c', desc: '팀워크 관리, 버프 부여' },
-                            { name: '시그마', title: '수호자', emoji: '⚡', color: '#f43f5e', desc: 'AI 논리 허점 압박 질문' },
+                            { name: '알파', title: '분석가', emoji: '📊', color: '#38bdf8', desc: '팩트 체크, 경제 수치 분석', img: '/personas/alpha.png' },
+                            { name: '델타', title: '중재자', emoji: '🕊️', color: '#06d6a0', desc: '갈등 완화, 이견 조율', img: '/personas/delta.png' },
+                            { name: '오메가', title: '설계자', emoji: '💡', color: '#a78bfa', desc: '윈윈 모델 창의적 제안', img: '/personas/omega.png' },
+                            { name: '람다', title: '치유사', emoji: '💚', color: '#fb923c', desc: '팀워크 관리, 버프 부여', img: '/personas/lambda.png' },
+                            { name: '시그마', title: '수호자', emoji: '⚡', color: '#f43f5e', desc: 'AI 논리 허점 압박 질문', img: '/personas/sigma.png' },
                         ].map((p, i) => (
                             <motion.div
                                 key={p.name}
@@ -528,7 +510,10 @@ export default function LandingPage() {
                                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${p.color}60`; e.currentTarget.style.boxShadow = `0 0 25px ${p.color}20`; }}
                                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${p.color}25`; e.currentTarget.style.boxShadow = 'none'; }}
                             >
-                                <div className="text-3xl mb-3">{p.emoji}</div>
+                                <div className="relative w-20 h-20 mx-auto mb-3 rounded-full overflow-hidden"
+                                    style={{ border: `2px solid ${p.color}40`, boxShadow: `0 0 15px ${p.color}25` }}>
+                                    <img src={p.img} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                                </div>
                                 <div className="font-black text-white text-lg">{p.name}</div>
                                 <div className="text-xs font-bold mb-2" style={{ color: p.color }}>{p.title}</div>
                                 <div className="text-xs leading-relaxed" style={{ color: 'rgba(167,139,250,0.6)' }}>{p.desc}</div>
