@@ -78,10 +78,10 @@ function SageOrb({
 
 // ─── Phase Card ───────────────────────────────────────────────
 function PhaseCard({
-    phase, name, desc, color, emoji, delay,
+    phase, name, desc, color, emoji, delay, sage,
 }: {
     phase: number; name: string; desc: string;
-    color: string; emoji: string; delay: number;
+    color: string; emoji: string; delay: number; sage?: string;
 }) {
     return (
         <motion.div
@@ -111,7 +111,13 @@ function PhaseCard({
                     </span>
                 </div>
                 <h3 className="font-black text-lg mb-2 text-white">{name}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: 'rgba(180,170,210,0.8)' }}>{desc}</p>
+                <p className="text-sm leading-relaxed mb-3" style={{ color: 'rgba(180,170,210,0.8)' }}>{desc}</p>
+                {sage && (
+                    <div className="flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-lg"
+                        style={{ background: `${color}10`, border: `1px solid ${color}20`, color }}>
+                        <span>🎯</span> {sage}
+                    </div>
+                )}
             </div>
         </motion.div>
     );
@@ -142,10 +148,10 @@ export default function LandingPage() {
     ];
 
     const phases = [
-        { phase: 0, name: '환상의 장막', desc: '마몬이 뿌린 달콤한 초콜릿 광고에 속지 마세요. 페르소나를 선택하고 팀을 구성하여 침묵의 성에 잠입합니다. 🎯 미션: 진실의 현자 구출 준비', color: '#f43f5e', emoji: '🎭' },
-        { phase: 1, name: '진실의 돋보기', desc: '마몬이 감춘 아동 노동, 착취 임금, 산림 파괴 등 5가지 진실을 스크래치로 파헤치세요. 고발 리포트를 작성하여 교사의 황금 인장을 받으세요. 🎯 미션: 정의의 현자 구출', color: '#f5a623', emoji: '🔍' },
-        { phase: 2, name: '지혜의 토론', desc: '유통업자, 농장주, 기업 임원, 협동조합장, 소비자까지 5명의 AI NPC와 협상하세요. 3명 이상 설득하면 다음 단계로! 🎯 미션: 지혜의 현자 구출', color: '#06d6a0', emoji: '⚖️' },
-        { phase: 3, name: '공정의 설계', desc: '가격 시뮬레이터로 농부·유통·기업의 배분율을 직접 조절하여 진정한 공정 가격을 설계하세요. 🎯 미션: 연대·용기의 현자 구출', color: '#a78bfa', emoji: '✨' },
+        { phase: 0, name: '환상의 장막', desc: '마몬이 뿌린 달콤한 광고의 환상을 뚫고, 공정가 페르소나를 선택하세요. 팀을 구성하여 침묵의 성으로 잠입합니다.', sage: '진실의 현자 구출 준비', color: '#f43f5e', emoji: '🎭' },
+        { phase: 1, name: '진실의 돋보기', desc: '광고 뒤에 숨겨진 아동 노동, 착취 임금, 산림 파괴 등 5가지 진실을 스크래치로 파헤치세요. 고발 리포트를 작성하여 교사의 황금 인장을 받으면 현자가 풀려납니다!', sage: '정의의 현자 구출', color: '#f5a623', emoji: '🔍' },
+        { phase: 2, name: '지혜의 토론', desc: '유통업자, 농장주, 기업 임원, 협동조합장, 소비자 — 5명의 AI NPC와 1:1 협상에 도전! 공감과 데이터로 3명 이상 설득하세요.', sage: '지혜의 현자 구출', color: '#06d6a0', emoji: '⚖️' },
+        { phase: 3, name: '공정의 설계', desc: '가격 시뮬레이터로 농부·유통·기업의 배분율을 직접 조절하여 진정한 공정 가격을 설계하세요. 파이차트로 결과를 확인합니다.', sage: '연대·용기의 현자 구출', color: '#a78bfa', emoji: '✨' },
     ];
 
     return (
@@ -415,31 +421,40 @@ export default function LandingPage() {
             </section>
 
             {/* ════════════════════════════════════════════
-          STATS BAR
+          STORY INTRO — 미션 브리핑
       ════════════════════════════════════════════ */}
             <section
-                className="py-8 relative"
-                style={{ background: 'rgba(109,40,217,0.08)', borderTop: '1px solid rgba(109,40,217,0.2)', borderBottom: '1px solid rgba(109,40,217,0.2)' }}
-                aria-label="플랫폼 통계"
+                className="py-12 relative"
+                style={{ background: 'rgba(109,40,217,0.06)', borderTop: '1px solid rgba(109,40,217,0.15)', borderBottom: '1px solid rgba(109,40,217,0.15)' }}
+                aria-label="미션 브리핑"
             >
-                <div className="max-w-4xl mx-auto px-6 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
-                    {[
-                        { value: '4단계', label: '게임 페이즈', icon: '🎮' },
-                        { value: '5인', label: '페르소나 역할', icon: '🎭' },
-                        { value: '5명', label: 'AI 협상 NPC', icon: '🤝' },
-                        { value: '5인', label: '결박된 현자', icon: '⛓' },
-                    ].map(({ value, label, icon }) => (
-                        <div key={label}>
-                            <div className="text-2xl mb-1">{icon}</div>
-                            <div className="text-2xl font-black" style={{
-                                background: 'linear-gradient(135deg, #c4b5fd, #a78bfa)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                backgroundClip: 'text',
-                            }}>{value}</div>
-                            <div className="text-xs mt-1" style={{ color: 'rgba(167,139,250,0.6)' }}>{label}</div>
+                <div className="max-w-3xl mx-auto px-6 text-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                    >
+                        <p className="text-xs uppercase tracking-[0.3em] mb-4 font-bold" style={{ color: 'rgba(244,63,94,0.7)' }}>
+                            긴급 미션 브리핑
+                        </p>
+                        <h2 className="text-xl sm:text-2xl font-black text-white mb-5 leading-relaxed">
+                            침묵의 성에서 <span style={{ color: '#f43f5e' }}>SOS 신호</span>가 왔습니다
+                        </h2>
+                        <div className="space-y-3 text-sm leading-relaxed" style={{ color: 'rgba(196,181,253,0.7)' }}>
+                            <p>
+                                탐욕의 악마 <strong style={{ color: '#f43f5e' }}>마몬</strong>이 세상의 진실을 감추고,
+                                공정한 무역을 지키던 <strong style={{ color: '#fbbf24' }}>5명의 현자</strong>를 황금 안대로 결박했습니다.
+                            </p>
+                            <p>
+                                현자들이 침묵하자, 농부의 아이들은 학교 대신 농장으로,
+                                소비자들은 거짓 광고에 속아 착취의 사슬을 이어가고 있습니다.
+                            </p>
+                            <p style={{ color: 'rgba(251,191,36,0.9)' }}>
+                                <strong>공정가(公正家)</strong>로 선발된 당신만이 이 사슬을 끊을 수 있습니다.
+                                <br />4개의 미션을 클리어하고, 현자들의 눈을 되찾아주세요!
+                            </p>
                         </div>
-                    ))}
+                    </motion.div>
                 </div>
             </section>
 
@@ -454,6 +469,7 @@ export default function LandingPage() {
                     className="rounded-3xl overflow-hidden relative"
                     style={{ background: 'linear-gradient(135deg, rgba(244,63,94,0.08), rgba(10,6,24,0.95))', border: '1px solid rgba(244,63,94,0.2)' }}
                 >
+                    {/* 마몬 소개 */}
                     <div className="flex flex-col sm:flex-row items-center gap-6 p-8 sm:p-10">
                         <div className="flex-shrink-0">
                             <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-2xl overflow-hidden"
@@ -478,6 +494,22 @@ export default function LandingPage() {
                                 공정가여, 마몬의 거짓을 파헤치고 현자들을 구출하세요!
                             </p>
                         </div>
+                    </div>
+
+                    {/* 마몬의 수법 */}
+                    <div className="px-8 sm:px-10 pb-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {[
+                            { icon: '🎭', title: '거짓 광고', desc: '"행복한 농장에서 온 초콜릿" — 실제로는 아동 노동과 착취가 숨겨져 있습니다.' },
+                            { icon: '⛓', title: '황금 사슬', desc: '농부에게 3%, 유통업자에게 40%. 불공정한 가격 구조로 빈곤의 사슬을 조여갑니다.' },
+                            { icon: '🔇', title: '침묵의 강요', desc: '진실을 말하려는 현자들을 가두고, 세상이 아무것도 모르게 만듭니다.' },
+                        ].map(item => (
+                            <div key={item.title} className="rounded-xl p-4 text-center"
+                                style={{ background: 'rgba(244,63,94,0.06)', border: '1px solid rgba(244,63,94,0.12)' }}>
+                                <div className="text-2xl mb-2">{item.icon}</div>
+                                <div className="text-xs font-bold text-white mb-1">{item.title}</div>
+                                <div className="text-xs leading-relaxed" style={{ color: 'rgba(196,181,253,0.6)' }}>{item.desc}</div>
+                            </div>
+                        ))}
                     </div>
                 </motion.div>
             </section>
