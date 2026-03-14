@@ -46,10 +46,12 @@ class AudioManager {
             document.removeEventListener('click', onInteract);
             document.removeEventListener('keydown', onInteract);
             document.removeEventListener('touchstart', onInteract);
+            document.removeEventListener('scroll', onInteract, true);
         };
         document.addEventListener('click', onInteract);
         document.addEventListener('keydown', onInteract);
         document.addEventListener('touchstart', onInteract);
+        document.addEventListener('scroll', onInteract, true);
 
         // 저장된 설정 불러오기
         const saved = localStorage.getItem('fair-factory-audio');
@@ -94,18 +96,10 @@ class AudioManager {
         this.bgmAudio = audio;
         this.currentBGM = path;
 
-        const startPlayback = () => {
-            // 교체된 경우 재생하지 않음
-            if (this.bgmAudio !== audio) return;
-            audio.play().catch(() => { /* 자동재생 차단 시 무시 */ });
-            this._fadeIn(audio, this.muted ? 0 : this.bgmVolume, 800);
-        };
-
-        if (audio.readyState >= 3) {
-            startPlayback();
-        } else {
-            audio.addEventListener('canplaythrough', startPlayback, { once: true });
-        }
+        // play()를 즉시 호출해야 유저 제스처 컨텍스트 유지 (모바일 autoplay 정책)
+        // canplaythrough 대기 시 제스처 컨텍스트를 잃어 재생 차단됨
+        audio.play().catch(() => { /* 자동재생 차단 시 무시 */ });
+        this._fadeIn(audio, this.muted ? 0 : this.bgmVolume, 800);
     }
 
     stopBGM() {
@@ -129,7 +123,7 @@ class AudioManager {
     }
 
     playSFX(key: SFXKey) {
-        if (this.muted) return;
+        if (this.muted || !this.userInteracted) return;
         try {
             const vol = this.sfxVolume;
             switch (key) {

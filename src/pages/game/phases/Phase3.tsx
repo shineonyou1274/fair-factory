@@ -195,8 +195,9 @@ export default function Phase3({ persona }: Props) {
                     <TrendingUp size={12} /> Phase 3 · 공정의 설계
                 </span>
                 <img src={`/personas/${persona.toLowerCase()}.png`} alt={persona}
-                    className="w-20 h-20 mx-auto mb-3 rounded-full object-cover"
-                    style={{ border: `3px solid ${PERSONA_COLORS[persona] ?? '#a78bfa'}`, boxShadow: `0 0 20px ${PERSONA_COLORS[persona] ?? '#a78bfa'}40` }} />
+                    className="w-20 h-20 mx-auto mb-3 rounded-full object-cover relative z-10"
+                    style={{ border: `3px solid ${PERSONA_COLORS[persona] ?? '#a78bfa'}`, boxShadow: `0 0 20px ${PERSONA_COLORS[persona] ?? '#a78bfa'}40` }}
+                    onError={e => { (e.target as HTMLImageElement).src = ''; (e.target as HTMLImageElement).style.display = 'none'; }} />
                 <h2 className="text-3xl font-black text-white mb-2">최적의 공정가를 설계하라</h2>
                 <p style={{ color: 'rgba(196,181,253,0.6)' }}>
                     슬라이더를 조작하여 모두가 납득할 수 있는 가격 구조를 만드세요
@@ -245,9 +246,9 @@ export default function Phase3({ persona }: Props) {
                         🎛️ 가격 조절 패널
                     </h3>
 
-                    <SliderRow label="카카오 원가" value={margins.farmCost} min={300} max={1500} unit="원"
+                    <SliderRow label="카카오 원가" value={margins.farmCost} min={300} max={5000} unit="원"
                         color="#06d6a0" onChange={set('farmCost')}
-                        hint="농장에서 카카오 1kg 생산에 드는 원가" />
+                        hint="농장에서 카카오 1kg 생산에 드는 원가 (실제: 800~3,000원)" />
                     <SliderRow label="농장주 마진" value={margins.farmerMargin} min={5} max={50}
                         color="#06d6a0" onChange={set('farmerMargin')}
                         hint="농장주의 수익률 (현실: 3~8%)" />

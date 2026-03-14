@@ -130,9 +130,10 @@ export default function LandingPage() {
     const { scrollY } = useScroll();
 
     // Landing BGM — 첫 인터랙션 후 자동 재생
+    // stopBGM을 cleanup에서 제거: GameRoom 진입 시 자동으로 교체됨
+    // 여기서 stop하면 첫 클릭(네비게이션)이 BGM 시작 직후 stop을 호출하여 음악이 안 들림
     useEffect(() => {
         audioManager.playBGM('landing');
-        return () => audioManager.stopBGM();
     }, []);
 
     // Parallax - castle image scrolls slower than content

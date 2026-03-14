@@ -57,12 +57,28 @@ export default function TeacherLoginPage() {
         try {
             const provider = new GoogleAuthProvider();
             const cred = await signInWithPopup(auth, provider);
-            const snap = await getDoc(doc(db, 'teachers', cred.user.uid));
+
+            // Google 인증 성공 → Firestore에서 교사 프로필 조회/생성
             let teacherData: TeacherUser;
-            if (snap.exists()) {
-                teacherData = snap.data() as TeacherUser;
-            } else {
-                // 첫 Google 로그인: Firestore에 교사 프로필 생성
+            try {
+                const snap = await getDoc(doc(db, 'teachers', cred.user.uid));
+                if (snap.exists()) {
+                    teacherData = snap.data() as TeacherUser;
+                } else {
+                    teacherData = {
+                        uid: cred.user.uid,
+                        email: cred.user.email!,
+                        displayName: cred.user.displayName ?? '선생님',
+                        role: 'teacher',
+                        sessions: [],
+                        createdAt: Date.now(),
+                    };
+                    const { TeacherService } = await import('@/lib/firebaseService');
+                    await TeacherService.upsert(cred.user.uid, teacherData);
+                }
+            } catch (firestoreErr: any) {
+                // Firestore 실패해도 인증은 성공했으므로 기본 프로필로 진행
+                console.warn('Firestore 조회/생성 실패, 기본 프로필로 진행:', firestoreErr);
                 teacherData = {
                     uid: cred.user.uid,
                     email: cred.user.email!,
@@ -71,8 +87,6 @@ export default function TeacherLoginPage() {
                     sessions: [],
                     createdAt: Date.now(),
                 };
-                const { TeacherService } = await import('@/lib/firebaseService');
-                await TeacherService.upsert(cred.user.uid, teacherData);
             }
             setUser(teacherData);
             navigate('/teacher/dashboard');
@@ -80,9 +94,18 @@ export default function TeacherLoginPage() {
             // 팝업 취소는 에러 아님
             if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
                 setError('');
+            } else if (err?.code === 'auth/unauthorized-domain') {
+                console.error('Google login error:', err);
+                setError('이 도메인이 Firebase 승인 도메인에 등록되지 않았습니다. Firebase Console → Authentication → Settings → Authorized domains에서 현재 도메인을 추가하세요.');
+            } else if (err?.code === 'auth/operation-not-allowed') {
+                console.error('Google login error:', err);
+                setError('Google 로그인이 Firebase에서 활성화되지 않았습니다. Firebase Console → Authentication → Sign-in method에서 Google을 활성화하세요.');
+            } else if (err?.code === 'auth/internal-error' || err?.code === 'auth/network-request-failed') {
+                console.error('Google login error:', err);
+                setError('네트워크 오류입니다. 인터넷 연결을 확인하고 다시 시도해주세요.');
             } else {
                 console.error('Google login error:', err);
-                setError('Google 로그인 중 오류가 발생했습니다. 다시 시도해주세요.');
+                setError(`Google 로그인 오류: ${err?.code ?? err?.message ?? '알 수 없는 오류'}. 아래 테스트 계정을 이용해주세요.`);
             }
         } finally {
             setLoading(false);

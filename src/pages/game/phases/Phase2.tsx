@@ -262,7 +262,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    const [profileOpen, setProfileOpen] = useState(true);
+    const [profileOpen, setProfileOpen] = useState(false);
     const npc = npcs.find(n => n.id === selectedNpc)!;
     const chatHistory = messages[selectedNpc] ?? [];
     const action = ACTION_CARDS[persona];
@@ -391,7 +391,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
             </div>
 
             {/* Header */}
-            <div className="text-center mb-2">
+            <div className="text-center mb-2 flex-shrink-0">
                 <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
                     style={{ background: 'rgba(6,214,160,0.15)', border: '1px solid rgba(6,214,160,0.3)', color: '#06d6a0' }}>
                     Phase 2 · 지혜의 토론
@@ -404,13 +404,13 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
             </div>
 
             {/* NPC Selector */}
-            <div className="mb-2">
+            <div className="mb-2 flex-shrink-0">
                 <NpcSelector npcs={npcs} selected={selectedNpc} onSelect={setSelectedNpc} />
             </div>
 
             {/* NPC 프로필 카드 */}
             {npc && profile && (
-                <div className="mb-3 rounded-xl overflow-hidden text-xs"
+                <div className="mb-2 rounded-xl overflow-hidden text-xs flex-shrink-0"
                     style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
                     {/* 헤더: 이름 + 상태 + 접기 버튼 */}
                     <button className="w-full px-4 py-3 flex items-center gap-3 text-left"
@@ -472,7 +472,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                                         style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.15)' }}>
                                         <span style={{ color: '#fbbf24' }}>{profile.hint}</span>
                                     </div>
-                                    {/* 신뢰도 설명 — 첫 대화 시에만 표시 */}
+                                                    {/* 신뢰도 설명 — 첫 대화 시에만 표시 */}
                                     {chatHistory.length <= 1 && (
                                         <div className="rounded-lg px-3 py-2 flex items-start gap-2"
                                             style={{ background: 'rgba(6,214,160,0.06)', border: '1px solid rgba(6,214,160,0.15)' }}>
@@ -483,6 +483,18 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                                             </span>
                                         </div>
                                     )}
+                                    {/* NPC별 미션 안내 */}
+                                    <div className="rounded-lg px-3 py-2"
+                                        style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
+                                        <span className="font-bold" style={{ color: '#a78bfa' }}>🎯 미션: </span>
+                                        <span style={{ color: 'rgba(226,232,240,0.8)' }}>
+                                            {selectedNpc === 'gorex' && '마진 40%의 부당함을 데이터로 논파하여 유통 구조 개선을 약속받으세요.'}
+                                            {selectedNpc === 'tierra' && '공감으로 마음을 열고, 공정무역 인증과 협동조합 참여를 권유하세요.'}
+                                            {selectedNpc === 'maxwell' && 'CSR 보고서와 실제 행동의 모순을 지적하여 공정무역 파일럿 도입을 이끌어내세요.'}
+                                            {selectedNpc === 'amara' && '인증 비용 지원 등 구체적 방안을 제시하여 협동조합 확대를 도우세요.'}
+                                            {selectedNpc === 'kim' && '가격 차이가 하루 200원이라는 점을 알려 공정무역 소비 참여를 이끌어내세요.'}
+                                        </span>
+                                    </div>
                                 </div>
                             </motion.div>
                         )}
@@ -491,8 +503,8 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
             )}
 
             {/* Chat area */}
-            <div className="flex-1 rounded-2xl p-4 overflow-y-auto mb-4"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)', minHeight: 120, maxHeight: 'calc(100dvh - 360px)' }}>
+            <div className="flex-1 rounded-2xl p-4 overflow-y-auto mb-2"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)', minHeight: 100 }}>
                 {chatHistory.map((msg, i) => <ChatBubble key={i} msg={msg} />)}
                 {sending && (
                     <div className="flex items-center gap-2 text-xs mb-4" style={{ color: 'rgba(167,139,250,0.5)' }}>
@@ -508,7 +520,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
             </div>
 
             {/* Action Card */}
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-2 flex-shrink-0">
                 <motion.button
                     onClick={useActionCard}
                     disabled={actionUsed}
@@ -537,7 +549,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
             )}
 
             {/* Input */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-shrink-0">
                 <input
                     value={input}
                     onChange={e => setInput(e.target.value)}
