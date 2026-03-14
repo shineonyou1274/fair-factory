@@ -96,10 +96,20 @@ class AudioManager {
         this.bgmAudio = audio;
         this.currentBGM = path;
 
-        // play()를 즉시 호출해야 유저 제스처 컨텍스트 유지 (모바일 autoplay 정책)
-        // canplaythrough 대기 시 제스처 컨텍스트를 잃어 재생 차단됨
-        audio.play().catch(() => { /* 자동재생 차단 시 무시 */ });
-        this._fadeIn(audio, this.muted ? 0 : this.bgmVolume, 800);
+        const target = this.muted ? 0 : this.bgmVolume;
+
+        // play()를 즉시 호출 (유저 제스처 컨텍스트 유지)
+        audio.play()
+            .then(() => this._fadeIn(audio, target, 800))
+            .catch(() => {
+                // 즉시 재생 실패 시 → 로드 완료 후 재시도
+                audio.addEventListener('canplaythrough', () => {
+                    if (this.bgmAudio !== audio) return;
+                    audio.play()
+                        .then(() => this._fadeIn(audio, target, 800))
+                        .catch(() => { /* 최종 실패 무시 */ });
+                }, { once: true });
+            });
     }
 
     stopBGM() {

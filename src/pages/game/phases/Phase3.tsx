@@ -211,11 +211,9 @@ export default function Phase3({ persona }: Props) {
             </div>
 
             {/* ── 실시간 가격 미니 패널 ── */}
-            <motion.div
-                className="rounded-2xl p-4 text-center mb-6"
-                animate={{ background: levelCfg.bg, borderColor: levelCfg.border }}
-                style={{ border: `2px solid ${levelCfg.border}`, backdropFilter: 'blur(12px)' }}
-                transition={{ duration: 0.4 }}
+            <div
+                className="rounded-2xl p-4 text-center mb-6 transition-colors duration-300"
+                style={{ background: levelCfg.bg, border: `2px solid ${levelCfg.border}`, backdropFilter: 'blur(12px)' }}
             >
                 <div className="flex items-center justify-center gap-6 flex-wrap">
                     <div>
@@ -235,7 +233,7 @@ export default function Phase3({ persona }: Props) {
                         <span className="ml-2">최저가 ₩{FAIR_TRADE_MIN.toLocaleString()}</span>
                     </div>
                 </div>
-            </motion.div>
+            </div>
 
             {/* ── 메인 그리드: 슬라이더(2/3) + 파이차트(1/3) ── */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

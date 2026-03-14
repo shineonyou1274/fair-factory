@@ -5,14 +5,16 @@ import { getDatabase } from 'firebase/database';
 import { getStorage } from 'firebase/storage';
 
 // ─── Firebase 설정 ────────────────────────────────────────────
+// trim(): Vercel 환경변수에 줄바꿈(\n)이 포함되면 Firebase URL이 깨짐
+const t = (v: string | undefined) => v?.trim();
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-    databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    apiKey: t(import.meta.env.VITE_FIREBASE_API_KEY),
+    authDomain: t(import.meta.env.VITE_FIREBASE_AUTH_DOMAIN),
+    databaseURL: t(import.meta.env.VITE_FIREBASE_DATABASE_URL),
+    projectId: t(import.meta.env.VITE_FIREBASE_PROJECT_ID),
+    storageBucket: t(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET),
+    messagingSenderId: t(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID),
+    appId: t(import.meta.env.VITE_FIREBASE_APP_ID),
 };
 
 // ─── 설정 검증 ───────────────────────────────────────────────

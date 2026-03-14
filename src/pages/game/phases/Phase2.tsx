@@ -382,7 +382,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="h-[calc(100dvh-56px)] flex flex-col max-w-3xl mx-auto px-4 pt-2 pb-3 relative overflow-x-hidden">
+            className="h-[calc(100dvh-56px)] flex flex-col max-w-3xl mx-auto px-4 pt-2 pb-3 relative z-10 overflow-x-hidden">
             {/* Phase 2 배경 */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <img src="/phases/phase2-bg.png" alt="" className="w-full h-full object-cover"
