@@ -104,48 +104,64 @@ function PhaseControl({
 }
 
 // ─── Student Row ──────────────────────────────────────────────
-function StudentRow({ student, onAwardSeal }: {
-    student: { id: string; name: string; persona: string; group?: number; submitted?: boolean; xp?: number; goldenSeal?: boolean };
+function StudentRow({ student, onAwardSeal, currentPhase }: {
+    student: { id: string; name: string; persona: string; group?: number; submitted?: boolean; xp?: number; goldenSeal?: boolean; submissions?: Record<string, any> };
     onAwardSeal: (id: string) => void;
+    currentPhase: number;
 }) {
+    const [expanded, setExpanded] = useState(false);
     const color = PERSONA_COLORS[student.persona] ?? '#a78bfa';
+    const sub = student.submissions?.[`phase${currentPhase}`];
+
     return (
-        <div className="flex items-center gap-3 py-3"
-            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
-                style={{ background: `${color}20`, border: `1px solid ${color}40` }}>
-                {PERSONA_EMOJI[student.persona]}
-            </div>
-            <div className="flex-1 min-w-0">
+        <div className="flex flex-col py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0"
+                    style={{ background: `${color}20`, border: `1px solid ${color}40` }}>
+                    {PERSONA_EMOJI[student.persona]}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-white">{student.name}</span>
+                        <span className="text-xs px-2 py-0.5 rounded-full"
+                            style={{ background: `${color}18`, color, border: `1px solid ${color}28` }}>
+                            {student.persona}
+                        </span>
+                        {student.group && <span className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>모둠{student.group}</span>}
+                    </div>
+                </div>
                 <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-white">{student.name}</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full"
-                        style={{ background: `${color}18`, color, border: `1px solid ${color}28` }}>
-                        {student.persona}
+                    <span className="text-xs font-bold" style={{ color: '#fbbf24' }}>
+                        <Zap size={10} className="inline mr-0.5" />{student.xp ?? 0}
                     </span>
-                    {student.group && <span className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>모둠{student.group}</span>}
+                    {(student.submitted || sub) && (
+                        <span className="text-xs px-2 py-0.5 rounded-full"
+                            style={{ background: 'rgba(6,214,160,0.15)', color: '#06d6a0' }}>
+                            제출 ✓
+                        </span>
+                    )}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onAwardSeal(student.id); }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                        style={{ background: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.25)' }}
+                        title="황금 인장 수여"
+                        aria-label={`${student.name}에게 황금 인장 수여`}
+                    >
+                        <Award size={13} style={{ color: '#fbbf24' }} />
+                    </button>
                 </div>
             </div>
-            <div className="flex items-center gap-2">
-                <span className="text-xs font-bold" style={{ color: '#fbbf24' }}>
-                    <Zap size={10} className="inline mr-0.5" />{student.xp ?? 0}
-                </span>
-                {student.submitted && (
-                    <span className="text-xs px-2 py-0.5 rounded-full"
-                        style={{ background: 'rgba(6,214,160,0.15)', color: '#06d6a0' }}>
-                        제출 ✓
-                    </span>
-                )}
-                <button
-                    onClick={() => onAwardSeal(student.id)}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                    style={{ background: 'rgba(245,166,35,0.12)', border: '1px solid rgba(245,166,35,0.25)' }}
-                    title="황금 인장 수여"
-                    aria-label={`${student.name}에게 황금 인장 수여`}
-                >
-                    <Award size={13} style={{ color: '#fbbf24' }} />
-                </button>
-            </div>
+
+            {expanded && sub && (
+                <div className="mt-3 ml-11 p-3 rounded-lg text-xs" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.9)', whiteSpace: 'pre-wrap' }}>
+                    {sub.content}
+                </div>
+            )}
+            {expanded && !sub && (
+                <div className="mt-3 ml-11 p-3 rounded-lg text-xs" style={{ background: 'rgba(255,255,255,0.02)', color: 'rgba(255,255,255,0.4)' }}>
+                    아직 이번 Phase의 제출 기록이 없습니다.
+                </div>
+            )}
         </div>
     );
 }
@@ -412,7 +428,7 @@ export default function SessionControl() {
                                     ) : (
                                         liveStudents.map(s => (
                                             <StudentRow key={s.id} student={s}
-                                                onAwardSeal={handleAwardSeal} />
+                                                onAwardSeal={handleAwardSeal} currentPhase={phase} />
                                         ))
                                     )}
                                 </div>

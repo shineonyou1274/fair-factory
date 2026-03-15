@@ -258,21 +258,25 @@ export const StudentService = {
         });
     },
 
-    /** 리포트 제출 */
-    async submitReport(sessionCode: string, studentId: string, content: string, fairPrice?: number) {
+    /** 리포트 제출 (Phase별) */
+    async submitReport(sessionCode: string, studentId: string, phase: number, content: string, data?: any) {
         await updateDoc(doc(db, 'sessions', sessionCode, 'students', studentId), {
             reportSubmitted: true,
-            reportContent: content,
-            fairPrice: fairPrice ?? null,
-            reportSubmittedAt: serverTimestamp(),
+            [`submissions.phase${phase}`]: {
+                content,
+                data: data ?? null,
+                submittedAt: serverTimestamp(),
+            },
+            updatedAt: serverTimestamp(),
         });
 
-        // 별도 리포트 컬렉션에도 저장
-        await setDoc(doc(db, 'reports', `${sessionCode}_${studentId}`), {
+        // 별도 리포트 컬렉션에도 저장 (교사용 백업/상세 조회)
+        await setDoc(doc(db, 'reports', `${sessionCode}_${studentId}_p${phase}`), {
             sessionCode,
             studentId,
+            phase,
             content,
-            fairPrice,
+            data: data ?? null,
             submittedAt: serverTimestamp(),
         });
     },

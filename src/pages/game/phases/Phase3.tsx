@@ -149,7 +149,7 @@ function PieChart({ shares, fairScore, levelCfg }: {
 
 // ─── Phase 3 Main ─────────────────────────────────────────────
 export default function Phase3({ persona }: Props) {
-    const phase0Choice = useSessionStore(s => s.phase0Choice);
+    const { sessionId, studentId, phase0Choice } = useSessionStore();
 
     // Phase 0에서 광고를 구매했으면 유통 마진을 높게 설정 → 문제 인식 유도
     // 거부했으면 낮게 → 다른 구조적 원인 탐색 유도
@@ -183,6 +183,13 @@ export default function Phase3({ persona }: Props) {
     function handleSubmit() {
         setSubmitted(true);
         if (isFair) setTimeout(() => setShowSageAnim(true), 800);
+
+        if (sessionId && studentId) {
+            const content = `공정지수: ${fairLevel === 'fair' ? '공정' : '불공정'} (${fairScore}점)\n최종 소비자가: ${finalPrice}원\n수익 분배: 농장주 ${shares.farmerGet}%, 협동조합 ${shares.coopGet}%, 유통업자 ${shares.distGet}%, 매장 ${shares.retailGet}%`;
+            import('@/lib/firebaseService').then(({ StudentService }) => {
+                StudentService.submitReport(sessionId, studentId, 3, content, { margins, finalPrice, shares, isFair }).catch(console.error);
+            });
+        }
     }
 
     return (

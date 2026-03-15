@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Zap, CheckCircle, Lock, Timer, ChevronDown, ChevronUp } from 'lucide-react';
 import type { NpcCharacter } from '@/types';
 import TutorialOverlay from '@/components/ui/TutorialOverlay';
+import { useSessionStore } from '@/store';
 
 const MAX_ROUNDS = 5;      // NPC당 최대 발언 횟수
 const TIMER_SECONDS = 180;  // NPC당 대화 제한 시간(초) - 변경: 사용자가 여유롭게 읽고 쓰도록 180초로 연장
@@ -254,6 +255,8 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     const [input, setInput] = useState('');
     const [actionUsed, setActionUsed] = useState(false);
     const [sending, setSending] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+    const { sessionId, studentId } = useSessionStore();
     // 라운드 제한: NPC별 남은 발언 횟수
     const [npcRounds, setNpcRounds] = useState<Record<string, number>>(
         () => Object.fromEntries((initNpcs.length ? initNpcs : defaultNpcs).map(n => [n.id, MAX_ROUNDS]))
@@ -598,11 +601,33 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                 <AnimatePresence>
                     {persuadeCount >= 3 && (
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                            className="mt-4 rounded-2xl p-4 text-center"
+                            className="mt-4 rounded-2xl p-5 text-center"
                             style={{ background: 'rgba(6,214,160,0.12)', border: '1px solid rgba(6,214,160,0.35)' }}>
-                            <div className="text-2xl mb-1">🎉</div>
-                            <p className="font-black text-white text-sm">3명 이상 설득 완료!</p>
-                            <p className="text-xs mt-1" style={{ color: 'rgba(6,214,160,0.8)' }}>선생님이 Phase 3으로 넘겨주실 때까지 대화를 계속하세요.</p>
+                            <div className="text-3xl mb-2">🎉</div>
+                            <p className="font-black text-white text-lg mb-1">3명 이상 설득 완료!</p>
+                            <p className="text-sm mb-4" style={{ color: 'rgba(6,214,160,0.8)' }}>
+                                선생님이 Phase 3으로 넘겨주실 때까지 추가 대화가 가능합니다.
+                            </p>
+                            {!submitted ? (
+                                <button
+                                    onClick={() => {
+                                        setSubmitted(true);
+                                        if (sessionId && studentId) {
+                                            const content = `[설득 성공: ${persuadeCount}명]\n설득된 NPC: ${npcs.filter(n => n.isPersuaded).map(n => n.name).join(', ')}`;
+                                            import('@/lib/firebaseService').then(({ StudentService }) => {
+                                                StudentService.submitReport(sessionId, studentId, 2, content, { npcs }).catch(console.error);
+                                            });
+                                        }
+                                    }}
+                                    className="px-6 py-3 rounded-xl font-bold text-white transition-all hover:scale-105 mx-auto flex items-center gap-2"
+                                    style={{ background: 'linear-gradient(135deg, #06d6a0, #04b083)', boxShadow: '0 0 20px rgba(6,214,160,0.4)' }}>
+                                    <Send size={16} /> 선생님께 결과 전송
+                                </button>
+                            ) : (
+                                <div className="text-sm font-bold flex items-center justify-center gap-2" style={{ color: '#06d6a0' }}>
+                                    <CheckCircle size={16} /> 결과가 전송되었습니다.
+                                </div>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>

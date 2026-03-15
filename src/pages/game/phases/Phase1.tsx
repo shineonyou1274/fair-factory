@@ -187,7 +187,7 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
         // Firebase에 리포트 전송 (교사 대시보드에서 확인 가능)
         if (sessionId && studentId) {
             import('@/lib/firebaseService').then(({ StudentService }) => {
-                StudentService.submitReport(sessionId, studentId, analysis).catch(() => {
+                StudentService.submitReport(sessionId, studentId, 1, analysis).catch(() => {
                     setSubmitError(true);
                 });
             });

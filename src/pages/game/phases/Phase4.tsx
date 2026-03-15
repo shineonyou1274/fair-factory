@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Send, Heart, Download, Share2, CheckCircle, Sparkles } from 'lucide-react';
+import { useSessionStore } from '@/store';
 
 interface Props {
     persona: string;
@@ -58,6 +59,7 @@ const ACTION_PLEDGES = [
 ];
 
 export default function Phase4({ persona, playerName, xp }: Props) {
+    const { sessionId, studentId } = useSessionStore();
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [currentQ, setCurrentQ] = useState(0);
     const [selectedPledge, setSelectedPledge] = useState<string | null>(null);
@@ -74,7 +76,16 @@ export default function Phase4({ persona, playerName, xp }: Props) {
 
     function handleSubmit() {
         setShowEnding(true);
-        // 몇 초 뒤에 진짜 제출 화면으로 넘어갈 수도 있지만, 엔딩 튜토리얼을 닫으면 submitted 화면을 보여주도록 함
+        if (sessionId && studentId) {
+            const content = Object.entries(answers).map(([qId, a]) => {
+                const qText = REFLECTION_QUESTIONS.find(q => q.id === qId)?.question;
+                return `Q. ${qText}\nA. ${a}`;
+            }).join('\n\n') + `\n\n[행동 약속]\n${pledge}`;
+
+            import('@/lib/firebaseService').then(({ StudentService }) => {
+                StudentService.submitReport(sessionId, studentId, 4, content, { answers, pledge }).catch(console.error);
+            });
+        }
     }
 
     if (showEnding) {

@@ -35,6 +35,7 @@ export interface StudentActivity {
     };
     actionCardsUsed: ActionCardUse[];
     reportSubmitted: boolean;
+    submissions?: Record<string, { content: string; data?: any; submittedAt: any }>; // Phase별 제출 데이터
     fairPrice: number | null;
     teamworkGauge: number;        // 0~100
     inventoryItems: ShopItem[];
