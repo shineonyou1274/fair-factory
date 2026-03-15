@@ -320,9 +320,9 @@ export default function LandingPage() {
                                         animate={{ width: `${((introStep + 1) / introDialogues.length) * 100}%` }}
                                         transition={{ duration: 0.5 }}
                                     />
-                                    <div className="text-xs font-bold uppercase tracking-widest animate-pulse flex items-center gap-2" style={{ color: 'rgba(196,181,253,0.9)' }}>
+                                    <div className="text-xs font-bold tracking-widest animate-pulse flex items-center gap-2" style={{ color: 'rgba(196,181,253,0.9)' }}>
                                         <ChevronRight size={14} />
-                                        화면을 여러 번 탭하여 이야기를 들어보세요 ({introStep + 1}/{introDialogues.length})
+                                        화면을 터치해서 다음 읽기 ({introStep + 1}/{introDialogues.length})
                                         <ChevronRight size={14} />
                                     </div>
                                 </div>
