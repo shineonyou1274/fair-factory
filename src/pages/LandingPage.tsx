@@ -270,27 +270,61 @@ export default function LandingPage() {
                 <AnimatePresence>
                     {introStep < introDialogues.length && (
                         <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-[100] flex items-center justify-center cursor-pointer"
-                            style={{ background: 'rgba(10,6,24,0.85)', backdropFilter: 'blur(8px)' }}
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.8 } }}
+                            className="fixed inset-0 z-[100] flex items-center justify-center cursor-pointer overflow-hidden p-6"
+                            style={{ background: 'rgba(10,6,24,0.7)', backdropFilter: 'blur(12px)' }}
                             onClick={nextIntro}
                         >
+                            {/* Decorative background glow for the overlay */}
+                            <motion.div
+                                className="absolute inset-0 pointer-events-none"
+                                animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.05, 1] }}
+                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                style={{ background: 'radial-gradient(circle at center, rgba(124,58,237,0.2) 0%, transparent 60%)' }}
+                            />
+
                             <motion.div
                                 key={introStep}
-                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.9, y: -20 }}
-                                className="px-8 py-6 rounded-3xl max-w-sm text-center shadow-2xl"
-                                style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(76,29,149,0.5))', border: '1px solid rgba(167,139,250,0.5)' }}
+                                initial={{ opacity: 0, scale: 0.85, y: 30, rotateX: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: -20, filter: 'blur(10px)' }}
+                                transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                                className="relative px-8 py-10 rounded-[2rem] max-w-md w-full text-center shadow-2xl"
+                                style={{
+                                    background: 'linear-gradient(145deg, rgba(88,28,135,0.4), rgba(46,16,101,0.6))',
+                                    border: '1.5px solid rgba(167,139,250,0.5)',
+                                    boxShadow: '0 25px 50px -12px rgba(88,28,135,0.5), inset 0 0 20px rgba(167,139,250,0.2)',
+                                    backdropFilter: 'blur(16px)'
+                                }}
                             >
-                                <div className="text-4xl mb-4 animate-bounce">
+                                <motion.div
+                                    className="text-5xl mb-6 mx-auto w-20 h-20 flex items-center justify-center rounded-3xl"
+                                    animate={{ y: [0, -10, 0] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                    style={{
+                                        background: 'rgba(139,92,246,0.2)',
+                                        border: '1px solid rgba(167,139,250,0.4)',
+                                        boxShadow: '0 0 20px rgba(139,92,246,0.3)'
+                                    }}
+                                >
                                     {introStep === 0 ? '🆘' : introStep === introDialogues.length - 1 ? '✨' : '💬'}
-                                </div>
-                                <p className="text-xl sm:text-2xl font-black text-white leading-relaxed mb-6">
+                                </motion.div>
+                                <p className="text-xl sm:text-2xl font-black text-white leading-relaxed mb-10 tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
                                     {introDialogues[introStep]}
                                 </p>
-                                <div className="text-xs font-bold uppercase tracking-widest animate-pulse" style={{ color: 'rgba(196,181,253,0.7)' }}>
-                                    화면을 터치하세요
+
+                                <div className="flex flex-col items-center gap-2">
+                                    <motion.div
+                                        className="h-1 bg-purple-500 rounded-full mb-3"
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${((introStep + 1) / introDialogues.length) * 100}%` }}
+                                        transition={{ duration: 0.5 }}
+                                    />
+                                    <div className="text-xs font-bold uppercase tracking-widest animate-pulse flex items-center gap-2" style={{ color: 'rgba(196,181,253,0.9)' }}>
+                                        <ChevronRight size={14} />
+                                        화면을 여러 번 탭하여 이야기를 들어보세요 ({introStep + 1}/{introDialogues.length})
+                                        <ChevronRight size={14} />
+                                    </div>
                                 </div>
                             </motion.div>
                         </motion.div>
