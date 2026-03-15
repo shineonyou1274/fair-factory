@@ -89,7 +89,11 @@ export const useUIStore = create<UIState>()(
             isSidebarOpen: false,
             isLoading: false,
             loadingMessage: '',
-            setLanguage: (language) => set({ language }),
+            setLanguage: (language) => {
+                set({ language });
+                // Sync with i18next
+                import('@/i18n').then(m => m.default.changeLanguage(language));
+            },
             addNotification: (n) => set((state) => {
                 const notification: AppNotification = {
                     ...n,

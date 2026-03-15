@@ -8,8 +8,15 @@
         "submit": "Submit",
         "buy": "Buy",
         "next": "Next",
+        "previous": "Previous",
         "start": "Start",
-        "save": "Save"
+        "save": "Save",
+        "retry": "Retry",
+        "error_network": "Please check your network connection.",
+        "error_submit": "Submission Failed",
+        "error_submit_detail": "Failed to send to server. Please check your network.",
+        "saved_locally": "Results saved locally.",
+        "waiting_teacher": "Waiting for teacher approval..."
     },
     "landing": {
         "subtitle": "An edu-game on labor, fair trade & structural empathy",
@@ -37,56 +44,120 @@
         "abilities": "Special Abilities"
     },
     "persona": {
-        "Alpha": {
-            "name": "Alpha",
-            "role": "Data Analyst",
-            "desc": "A sharp analyst who sees the world through numbers and statistics"
-        },
-        "Delta": {
-            "name": "Delta",
-            "role": "Peace Mediator",
-            "desc": "A warm communicator who dissolves conflict with empathy"
-        },
-        "Omega": {
-            "name": "Omega",
-            "role": "Idea Designer",
-            "desc": "An innovator who turns the impossible into possible"
-        },
-        "Lambda": {
-            "name": "Lambda",
-            "role": "Healing Supporter",
-            "desc": "A warm supporter who restores the team's energy"
-        },
-        "Sigma": {
-            "name": "Sigma",
-            "role": "Critical Guardian",
-            "desc": "A sharp-eyed justice advocate who sees through injustice"
-        }
+        "Alpha": { "name": "Alpha", "role": "Data Analyst", "desc": "A sharp analyst who sees the world through numbers and statistics" },
+        "Delta": { "name": "Delta", "role": "Peace Mediator", "desc": "A warm communicator who dissolves conflict with empathy" },
+        "Omega": { "name": "Omega", "role": "Idea Designer", "desc": "An innovator who turns the impossible into possible" },
+        "Lambda": { "name": "Lambda", "role": "Healing Supporter", "desc": "A warm supporter who restores the team's energy" },
+        "Sigma": { "name": "Sigma", "role": "Critical Guardian", "desc": "A sharp-eyed justice advocate who sees through injustice" }
+    },
+    "hud": {
+        "home": "Home",
+        "shop": "Shop",
+        "notifications": "Notifications",
+        "logout": "Exit",
+        "logout_confirm": "Are you sure you want to leave? Progress may not be saved.",
+        "team_panel": "My Team",
+        "no_team": "No team members yet.",
+        "npc_trust": "NPC Trust",
+        "persuaded": "Persuaded",
+        "test": "Test"
     },
     "game": {
-        "phase0": {
-            "name": "The Veil of Illusion",
-            "desc": "The truth hidden behind sweet temptation"
-        },
-        "phase1": {
-            "name": "Magnifier of Truth",
-            "desc": "Discover the hidden traces of exploitation"
-        },
-        "phase2": {
-            "name": "Debate of Wisdom",
-            "desc": "Persuade the stakeholders"
-        },
-        "phase3": {
-            "name": "Design of Fairness",
-            "desc": "Design a fair price"
-        },
+        "phase0": { "name": "The Veil of Illusion", "desc": "The truth hidden behind sweet temptation" },
+        "phase1": { "name": "Magnifier of Truth", "desc": "Discover the hidden traces of exploitation" },
+        "phase2": { "name": "Debate of Wisdom", "desc": "Persuade the stakeholders" },
+        "phase3": { "name": "Design of Fairness", "desc": "Design a fair price" },
+        "phase4": { "name": "Mirror of Reflection", "desc": "Reflect on your journey" },
         "xp": "XP",
         "teamwork": "Teamwork",
         "shop": "Shop",
         "notifications": "Notifications",
         "my_team": "My Team",
         "golden_seal": "Golden Seal",
-        "npc_trust": "NPC Trust"
+        "npc_trust": "NPC Trust",
+        "phase_change": "Phase Changed!",
+        "loading_game": "Loading game...",
+        "loading": "Loading...",
+        "touch_to_start": "Touch to start"
+    },
+    "phase1": {
+        "title": "Phase 1 · Magnifier of Truth",
+        "header": "Uncover What's Hidden Behind the Ads",
+        "report_title": "Exposé Report",
+        "report_placeholder": "Analyze how the truths you discovered are interconnected.",
+        "submit_teacher": "Submit to Teacher",
+        "submit_success": "Report Submitted!",
+        "submit_waiting": "Waiting for teacher's golden seal approval...",
+        "min_truths": "Discover at least 3 truths to submit your report"
+    },
+    "phase2": {
+        "title": "Phase 2 · Debate of Wisdom",
+        "persuade_status": "Persuasion Progress:",
+        "persuade_target": "Persuade 3+ NPCs to advance to Phase 3",
+        "rounds_exhausted": "Rounds with this NPC are over. Talk to another NPC.",
+        "action_used": "Used (1 per session)",
+        "persuade_complete": "3+ NPCs Persuaded!",
+        "send_result": "Send Results to Teacher",
+        "result_sent": "Results sent successfully."
+    },
+    "phase3": {
+        "title": "Phase 3 · Design of Fairness",
+        "header": "Design the Optimal Fair Price",
+        "subtitle": "Adjust the sliders to create a price structure everyone can accept",
+        "final_price": "Final Consumer Price",
+        "fair_level_fair": "Fair Price",
+        "fair_level_partial": "Needs Improvement",
+        "fair_level_unfair": "Unfair",
+        "fair_index": "Fairness Index",
+        "panel_title": "Price Adjustment Panel",
+        "farm_cost": "Cocoa Cost",
+        "farmer_margin": "Farmer Margin",
+        "premium_margin": "Fair Trade Premium",
+        "coop_margin": "Cooperative Margin",
+        "dist_margin": "Distributor Margin",
+        "retail_margin": "Retailer Margin",
+        "revenue_distribution": "Revenue Distribution",
+        "farmer_income": "Farmer Net Income",
+        "fair_met": "Fair standard met",
+        "fair_unmet": "Below 15% target",
+        "submit_fair": "Confirm Fair Price & Submit!",
+        "submit_current": "Submit Current Price",
+        "submit_done": "Submitted!",
+        "real_data_title": "Real Revenue Distribution (2023)"
+    },
+    "phase4": {
+        "title": "Phase 4 · Mirror of Reflection",
+        "header": "Time to Look Back",
+        "subtitle": "Record what you learned, felt, and will practice",
+        "pledge_title": "My Action Pledge",
+        "pledge_subtitle": "Choose one pledge to practice from today",
+        "pledge_custom": "Write your own pledge",
+        "pledge_custom_placeholder": "Write your own action pledge...",
+        "submit_journal": "Submit Reflection Journal",
+        "all_required": "Answer all questions (5+ chars each) to submit",
+        "ending_complete": "All Missions Complete!",
+        "ending_subtitle": "The Castle of Silence Has Fallen",
+        "ending_finish": "Finish the Journey →",
+        "reflection_done": "Reflection Complete!",
+        "share_pledge": "Share Pledge"
+    },
+    "briefing": {
+        "phase0_mission": "Look at the ad and decide whether to buy!",
+        "phase0_tip": "Trust your instincts. You might be surprised later.",
+        "phase1_mission": "Scratch the screen to discover hidden truths!",
+        "phase1_tip": "Truths are hidden beneath the bright spots.",
+        "phase2_mission": "Talk to 5 NPCs and persuade them!",
+        "phase2_tip": "Identifying each NPC's weakness makes persuasion easier.",
+        "phase3_mission": "Design a fair price structure!",
+        "phase3_tip": "Check if the farmer's income is sufficient.",
+        "phase4_mission": "Write a reflection journal about your journey!",
+        "phase4_tip": "Be honest. There are no wrong answers.",
+        "touch_to_start": "Touch to start"
+    },
+    "error": {
+        "title": "An error occurred",
+        "desc": "A temporary problem occurred. Please try again.",
+        "game_error": "Unable to load game screen"
     },
     "shop": {
         "title": "Fair Price Shop",
@@ -107,7 +178,7 @@
         "stats": "Detailed Stats",
         "export_csv": "Export CSV",
         "end_class": "End Class",
-        "well_done": "Well done! The Castle of Silence has regained its light. ✨"
+        "well_done": "Well done! The Castle of Silence has regained its light."
     },
     "notifications": {
         "no_notifications": "No notifications",

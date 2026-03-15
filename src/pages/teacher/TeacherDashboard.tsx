@@ -166,7 +166,13 @@ export default function TeacherDashboard() {
                     const real = await TeacherService.getSessions(user.uid);
                     setSessions(real);
                 } else if (!isFirebaseConfigured()) {
-                    setSessions([MOCK_SESSION]);
+                    // Mock 모드: 삭제된 세션 ID를 localStorage에서 확인
+                    const deletedIds: string[] = JSON.parse(localStorage.getItem('fair-factory-deleted-sessions') ?? '[]');
+                    if (!deletedIds.includes(MOCK_SESSION.id)) {
+                        setSessions([MOCK_SESSION]);
+                    } else {
+                        setSessions([]);
+                    }
                 } else {
                     setSessions([]);
                 }
@@ -200,6 +206,11 @@ export default function TeacherDashboard() {
                 setSessions(prev => prev.filter(s => s.id !== id));
             }).catch(console.error);
         } else {
+            // Mock 모드: 삭제된 세션 ID를 localStorage에 기록
+            const deletedIds: string[] = JSON.parse(localStorage.getItem('fair-factory-deleted-sessions') ?? '[]');
+            if (!deletedIds.includes(id)) {
+                localStorage.setItem('fair-factory-deleted-sessions', JSON.stringify([...deletedIds, id]));
+            }
             setSessions(prev => prev.filter(s => s.id !== id));
         }
     }

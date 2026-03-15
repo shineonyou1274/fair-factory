@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store';
+import { useTranslation } from 'react-i18next';
 
 // Pages - Lazy loaded
 import { lazy, Suspense } from 'react';
@@ -17,6 +18,7 @@ const AdminPanel = lazy(() => import('@/pages/admin/AdminPanel'));
 
 // Loading fallback
 function PageLoader() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-gradient-radial bg-stars flex items-center justify-center">
       <div className="text-center">
@@ -24,7 +26,7 @@ function PageLoader() {
           <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[var(--color-gold)] animate-spin" />
           <div className="absolute inset-2 rounded-full border-4 border-transparent border-t-[var(--color-emerald)] animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
         </div>
-        <p className="text-[var(--text-secondary)] text-sm animate-pulse">게임을 불러오는 중...</p>
+        <p className="text-[var(--text-secondary)] text-sm animate-pulse">{t('game.loading_game')}</p>
       </div>
     </div>
   );

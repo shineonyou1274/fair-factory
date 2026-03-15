@@ -18,6 +18,8 @@ import NotificationPanel from '@/components/game/NotificationPanel';
 import LanguageSwitcher from '@/components/ui/LanguageSwitcher';
 import AudioControls from '@/components/ui/AudioControls';
 import { audioManager } from '@/lib/audioManager';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
+import { useTranslation } from 'react-i18next';
 
 const PERSONA_COLORS: Record<string, string> = {
     Alpha: '#38bdf8', Delta: '#06d6a0', Omega: '#a78bfa',
@@ -26,7 +28,7 @@ const PERSONA_COLORS: Record<string, string> = {
 const PERSONA_EMOJI: Record<string, string> = {
     Alpha: '📊', Delta: '🕊️', Omega: '💡', Lambda: '💚', Sigma: '⚡',
 };
-const PHASE_NAMES = ['환상의 장막', '진실의 돋보기', '지혜의 토론', '공정의 설계', '성찰의 거울'];
+const PHASE_KEYS = ['phase0', 'phase1', 'phase2', 'phase3', 'phase4'] as const;
 const PHASE_COLORS = ['#f43f5e', '#f5a623', '#06d6a0', '#a78bfa', '#38bdf8'];
 
 // ─── HUD Top Bar ──────────────────────────────────────────────
@@ -38,8 +40,10 @@ function HUD({
     teamwork: number; xp: number; unreadCount: number;
     onShop: () => void; onNotif: () => void; onLogout: () => void; onHome: () => void;
 }) {
+    const { t } = useTranslation();
     const color = PERSONA_COLORS[persona] ?? '#a78bfa';
     const phaseColor = PHASE_COLORS[phase];
+    const phaseName = t(`game.${PHASE_KEYS[phase]}.name`);
 
     return (
         <header className="fixed top-0 left-0 right-0 z-50"
@@ -51,7 +55,7 @@ function HUD({
                     style={{ background: 'linear-gradient(135deg, #7c3aed, #e94560)' }}
                     onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 12px rgba(124,58,237,0.5)'; }}
                     onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
-                    aria-label="홈으로" title="홈으로 돌아가기">
+                    aria-label={t('hud.home')} title={t('hud.home')}>
                     공
                 </button>
 
@@ -60,7 +64,7 @@ function HUD({
                     style={{ background: `${phaseColor}18`, border: `1px solid ${phaseColor}40` }}>
                     <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: phaseColor }} />
                     <span className="text-xs font-bold hidden sm:block" style={{ color: phaseColor }}>
-                        {PHASE_NAMES[phase]}
+                        {phaseName}
                     </span>
                     <span className="text-xs font-bold sm:hidden" style={{ color: phaseColor }}>P{phase}</span>
                 </div>
@@ -78,13 +82,13 @@ function HUD({
                                     background: isCurrent ? `${PHASE_COLORS[p]}20` : 'transparent',
                                     border: isCurrent ? `1px solid ${PHASE_COLORS[p]}50` : '1px solid transparent',
                                 }}
-                                title={`Phase ${p}: ${PHASE_NAMES[p]}`}
+                                title={`Phase ${p}: ${t(`game.${PHASE_KEYS[p]}.name`)}`}
                             >
                                 <span className="text-xs">{PHASE_STEP_LABELS[p]}</span>
                                 {isDone && <span className="text-xs" style={{ color: '#06d6a0' }}>✓</span>}
                                 {isCurrent && (
                                     <span className="text-xs font-bold hidden lg:block" style={{ color: PHASE_COLORS[p] }}>
-                                        {PHASE_NAMES[p]}
+                                        {t(`game.${PHASE_KEYS[p]}.name`)}
                                     </span>
                                 )}
                             </div>
@@ -127,14 +131,14 @@ function HUD({
                     style={{ background: 'rgba(255,255,255,0.06)' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-                    aria-label="상점">
+                    aria-label={t('hud.shop')}>
                     <ShoppingBag size={14} style={{ color: '#a78bfa' }} />
                 </button>
                 <button onClick={onNotif} className="w-8 h-8 rounded-lg flex items-center justify-center relative transition-all"
                     style={{ background: 'rgba(255,255,255,0.06)' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-                    aria-label="알림">
+                    aria-label={t('hud.notifications')}>
                     <Bell size={14} style={{ color: '#a78bfa' }} />
                     {unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center"
@@ -149,7 +153,7 @@ function HUD({
                     style={{ background: 'rgba(255,255,255,0.06)' }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(244,63,94,0.2)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
-                    aria-label="나가기">
+                    aria-label={t('hud.logout')}>
                     <LogOut size={14} style={{ color: '#f43f5e' }} />
                 </button>
             </div>
@@ -159,6 +163,7 @@ function HUD({
 
 // ─── Team Panel (right side) ──────────────────────────────────
 function TeamPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+    const { t } = useTranslation();
     const { currentGroup } = useSessionStore();
     const assignments = currentGroup?.personaAssignments ?? {};
 
@@ -176,13 +181,13 @@ function TeamPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
                     >
                         <div className="flex items-center justify-between mb-5">
                             <h3 className="font-black text-white flex items-center gap-2">
-                                <Users size={16} style={{ color: '#a78bfa' }} /> 우리 모둠
+                                <Users size={16} style={{ color: '#a78bfa' }} /> {t('hud.team_panel')}
                             </h3>
-                            <button onClick={onClose} className="text-xs" style={{ color: 'rgba(139,92,246,0.5)' }}>닫기</button>
+                            <button onClick={onClose} className="text-xs" style={{ color: 'rgba(139,92,246,0.5)' }}>{t('common.close')}</button>
                         </div>
 
                         {Object.entries(assignments).length === 0 ? (
-                            <p className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>팀원이 아직 없습니다.</p>
+                            <p className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>{t('hud.no_team')}</p>
                         ) : (
                             Object.entries(assignments).map(([id, persona]) => {
                                 const color = PERSONA_COLORS[persona] ?? '#a78bfa';
@@ -196,7 +201,7 @@ function TeamPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
                                         <div>
                                             <div className="text-xs font-bold text-white">{persona}</div>
                                             <div className="text-xs" style={{ color: `${color}80` }}>
-                                                {['분석가', '중재자', '설계자', '치유사', '수호자'][['Alpha', 'Delta', 'Omega', 'Lambda', 'Sigma'].indexOf(persona)]}
+                                                {t(`persona.${persona}.role`)}
                                             </div>
                                         </div>
                                     </div>
@@ -207,14 +212,14 @@ function TeamPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
                         {/* NPC Trust Levels */}
                         <div className="mt-6">
                             <h4 className="text-xs font-bold mb-3 uppercase tracking-widest" style={{ color: 'rgba(139,92,246,0.5)' }}>
-                                NPC 신뢰도
+                                {t('hud.npc_trust')}
                             </h4>
                             {(currentGroup?.npcs ?? []).map(npc => (
                                 <div key={npc.id} className="mb-3">
                                     <div className="flex justify-between text-xs mb-1">
                                         <span className="text-white">{npc.emoji} {npc.name}</span>
                                         <span style={{ color: npc.isPersuaded ? '#06d6a0' : 'rgba(139,92,246,0.5)' }}>
-                                            {npc.isPersuaded ? '설득 완료 ✓' : `${npc.trustLevel}%`}
+                                            {npc.isPersuaded ? `${t('hud.persuaded')} ✓` : `${npc.trustLevel}%`}
                                         </span>
                                     </div>
                                     <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
@@ -235,6 +240,7 @@ function TeamPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
 
 // ─── Main GameRoom ────────────────────────────────────────────
 export default function GameRoom() {
+    const { t } = useTranslation();
     const { sessionId } = useParams();
     const navigate = useNavigate();
     const { studentProfile, logout } = useAuthStore();
@@ -268,7 +274,7 @@ export default function GameRoom() {
             const val = snap.val();
             if (val !== null) {
                 setPhase(val as Phase);
-                addNotification({ type: 'phase_change', title: '단계 변경!', message: `Phase ${val}: ${PHASE_NAMES[val as Phase]}` });
+                addNotification({ type: 'phase_change', title: t('game.phase_change'), message: `Phase ${val}: ${t(`game.${PHASE_KEYS[val as Phase]}.name`)}` });
             }
         });
         return () => unsub();
@@ -284,7 +290,7 @@ export default function GameRoom() {
                     const newPhase = parsed?.state?.currentPhase;
                     if (newPhase !== undefined && newPhase !== currentPhase) {
                         setPhase(newPhase as Phase);
-                        addNotification({ type: 'phase_change', title: '단계 변경!', message: `Phase ${newPhase}: ${PHASE_NAMES[newPhase as Phase]}` });
+                        addNotification({ type: 'phase_change', title: t('game.phase_change'), message: `Phase ${newPhase}: ${t(`game.${PHASE_KEYS[newPhase as Phase]}.name`)}` });
                     }
                 } catch { /* ignore */ }
             }
@@ -319,13 +325,7 @@ export default function GameRoom() {
     const [briefing, setBriefing] = useState(false);
     const prevPhaseRef = useState<Phase | null>(null);
 
-    const BRIEFINGS: Record<number, { emoji: string; title: string; mission: string; tip: string }> = {
-        0: { emoji: '🎭', title: '환상의 장막', mission: '화면의 광고를 보고 구매할지 결정하세요!', tip: '💡 직감을 믿으세요. 나중에 놀랄 수 있어요.' },
-        1: { emoji: '🔍', title: '진실의 돋보기', mission: '화면을 문질러서 숨겨진 진실을 발견하세요!', tip: '💡 밝은 부분 아래에 진실이 숨어있습니다.' },
-        2: { emoji: '⚖️', title: '지혜의 토론', mission: '5명의 NPC와 대화하여 설득하세요!', tip: '💡 각 NPC의 약점을 파악하면 더 쉽게 설득할 수 있어요.' },
-        3: { emoji: '✨', title: '공정의 설계', mission: '공정한 가격 구조를 설계하세요!', tip: '💡 농부의 수입이 충분한지 확인해보세요.' },
-        4: { emoji: '📝', title: '성찰의 거울', mission: '여정을 돌아보며 성찰 저널을 작성하세요!', tip: '💡 솔직한 마음을 적어주세요. 정답은 없습니다.' },
-    };
+    const BRIEFING_EMOJIS = ['🎭', '🔍', '⚖️', '✨', '📝'];
 
     useEffect(() => {
         // 첫 렌더 제외, Phase 변경 시에만 브리핑 표시
@@ -350,7 +350,7 @@ export default function GameRoom() {
                 onNotif={() => setNotifOpen(v => !v)}
                 onHome={() => navigate('/')}
                 onLogout={() => {
-                    if (confirm('정말 나가시겠습니까? 진행 상황이 저장되지 않을 수 있습니다.')) {
+                    if (confirm(t('hud.logout_confirm'))) {
                         audioManager.stopBGM();
                         logout();
                         navigate('/');
@@ -360,7 +360,7 @@ export default function GameRoom() {
 
             {/* Phase Briefing Overlay */}
             <AnimatePresence>
-                {briefing && BRIEFINGS[currentPhase] && (
+                {briefing && (
                     <motion.div
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="fixed inset-0 z-[60] flex items-center justify-center"
@@ -377,24 +377,24 @@ export default function GameRoom() {
                                 transition={{ repeat: Infinity, duration: 2 }}
                                 className="text-7xl mb-5"
                                 style={{ filter: `drop-shadow(0 0 30px ${PHASE_COLORS[currentPhase]}80)` }}>
-                                {BRIEFINGS[currentPhase].emoji}
+                                {BRIEFING_EMOJIS[currentPhase]}
                             </motion.div>
                             <div className="text-xs uppercase tracking-[0.3em] mb-2 font-bold"
                                 style={{ color: PHASE_COLORS[currentPhase] }}>
                                 Phase {currentPhase}
                             </div>
                             <h2 className="text-3xl font-black text-white mb-3">
-                                {BRIEFINGS[currentPhase].title}
+                                {t(`game.${PHASE_KEYS[currentPhase]}.name`)}
                             </h2>
                             <p className="text-base font-semibold text-white mb-4">
-                                🎯 {BRIEFINGS[currentPhase].mission}
+                                🎯 {t(`briefing.phase${currentPhase}_mission`)}
                             </p>
                             <p className="text-sm rounded-xl px-4 py-3 mb-6"
                                 style={{ background: `${PHASE_COLORS[currentPhase]}12`, color: `${PHASE_COLORS[currentPhase]}cc`, border: `1px solid ${PHASE_COLORS[currentPhase]}25` }}>
-                                {BRIEFINGS[currentPhase].tip}
+                                {t(`briefing.phase${currentPhase}_tip`)}
                             </p>
                             <p className="text-xs animate-pulse" style={{ color: 'rgba(139,92,246,0.4)' }}>
-                                화면을 터치하면 시작합니다
+                                {t('briefing.touch_to_start')}
                             </p>
                         </motion.div>
                     </motion.div>
@@ -410,12 +410,12 @@ export default function GameRoom() {
                             background: currentPhase === p ? PHASE_COLORS[p] : 'rgba(255,255,255,0.08)',
                             color: currentPhase === p ? '#fff' : 'rgba(255,255,255,0.3)',
                         }}
-                        title={`Phase ${p}: ${PHASE_NAMES[p]}`}
+                        title={`Phase ${p}: ${t(`game.${PHASE_KEYS[p]}.name`)}`}
                     >
                         {p}
                     </button>
                 ))}
-                <span className="text-xs self-center ml-1" style={{ color: 'rgba(139,92,246,0.4)' }}>테스트</span>
+                <span className="text-xs self-center ml-1" style={{ color: 'rgba(139,92,246,0.4)' }}>{t('hud.test')}</span>
             </div>
 
             {/* Team Panel toggle */}
@@ -423,7 +423,7 @@ export default function GameRoom() {
                 onClick={() => setTeamPanelOpen(true)}
                 className="fixed top-20 right-0 z-40 flex items-center gap-1 px-2 py-3 rounded-l-xl transition-all"
                 style={{ background: 'rgba(124,58,237,0.3)', border: '1px solid rgba(124,58,237,0.4)', borderRight: 'none' }}
-                aria-label="팀 패널 열기"
+                aria-label={t('hud.team_panel')}
             >
                 <Users size={14} style={{ color: '#c4b5fd' }} />
                 <ChevronRight size={12} style={{ color: '#a78bfa' }} />
@@ -462,17 +462,19 @@ export default function GameRoom() {
                             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: 'linear' }}
                                 className="w-10 h-10 rounded-full mx-auto mb-4"
                                 style={{ border: '3px solid rgba(124,58,237,0.2)', borderTopColor: '#7c3aed' }} />
-                            <p className="text-sm" style={{ color: 'rgba(139,92,246,0.6)' }}>로딩 중...</p>
+                            <p className="text-sm" style={{ color: 'rgba(139,92,246,0.6)' }}>{t('game.loading')}</p>
                         </div>
                     </div>
                 }>
-                    <AnimatePresence mode="wait">
-                        {currentPhase === 0 && <Phase0 key="p0" persona={persona} onPhaseComplete={() => setPhase(1)} />}
-                        {currentPhase === 1 && <Phase1 key="p1" persona={persona} onPhaseComplete={() => setPhase(2)} sessionId={sessionId} studentId={studentProfile?.studentId} />}
-                        {currentPhase === 2 && <Phase2 key="p2" persona={persona} npcs={currentGroup?.npcs ?? []} />}
-                        {currentPhase === 3 && <Phase3 key="p3" persona={persona} />}
-                        {currentPhase === 4 && <Phase4 key="p4" persona={persona} playerName={name} xp={xp} />}
-                    </AnimatePresence>
+                    <ErrorBoundary fallbackTitle={t('error.game_error')}>
+                        <AnimatePresence mode="wait">
+                            {currentPhase === 0 && <Phase0 key="p0" persona={persona} onPhaseComplete={() => setPhase(1)} />}
+                            {currentPhase === 1 && <Phase1 key="p1" persona={persona} onPhaseComplete={() => setPhase(2)} />}
+                            {currentPhase === 2 && <Phase2 key="p2" persona={persona} npcs={currentGroup?.npcs ?? []} />}
+                            {currentPhase === 3 && <Phase3 key="p3" persona={persona} />}
+                            {currentPhase === 4 && <Phase4 key="p4" persona={persona} playerName={name} xp={xp} />}
+                        </AnimatePresence>
+                    </ErrorBoundary>
                 </Suspense>
             </main>
         </div>

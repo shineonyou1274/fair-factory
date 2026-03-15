@@ -35,10 +35,14 @@ export interface StudentActivity {
     };
     actionCardsUsed: ActionCardUse[];
     reportSubmitted: boolean;
-    submissions?: Record<string, { content: string; data?: any; submittedAt: any }>; // Phase별 제출 데이터
+    submissions?: Record<string, { content: string; data?: unknown; submittedAt: unknown }>; // Phase별 제출 데이터
     fairPrice: number | null;
     teamworkGauge: number;        // 0~100
     inventoryItems: ShopItem[];
+    joinedAt?: number;
+    sessionCode?: string;
+    goldenSeal?: boolean;
+    goldenSealAt?: unknown;
 }
 
 // ─── Action Cards ─────────────────────────────────────────────
@@ -82,7 +86,7 @@ export interface ClassSession {
 
 export interface SessionSettings {
     maxGroupSize: 3 | 4 | 5;
-    minGroupSize: 3 | 4 | 5;
+    minGroupSize: 2 | 3 | 4 | 5;
     allowPersonaChoice: boolean;
     phaseTimeLimits: Record<Phase, number | null>;  // null = unlimited
     language: Language;

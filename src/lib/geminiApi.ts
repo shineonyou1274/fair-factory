@@ -30,7 +30,24 @@ const SYSTEM_PROMPTS: Record<string, string> = {
 답변은 1~2문장 이내로 공감 가고 현실적으로 한국어로 대답하세요. 절대 길게 말하지 마세요.`,
 };
 
-export async function generateGeminiResponse(npcId: string, userMessage: string, persona: string, chatHistory: any[]): Promise<string | null> {
+interface ChatHistoryEntry {
+    role: 'user' | 'npc';
+    text: string;
+}
+
+/** 타임아웃이 적용된 Promise 래퍼 */
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+    return Promise.race([
+        promise,
+        new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('GEMINI_TIMEOUT')), ms)
+        ),
+    ]);
+}
+
+const GEMINI_TIMEOUT_MS = 10_000; // 10초
+
+export async function generateGeminiResponse(npcId: string, userMessage: string, persona: string, chatHistory: ChatHistoryEntry[]): Promise<string | null> {
     if (!import.meta.env.VITE_GEMINI_API_KEY) {
         return null;
     }
@@ -41,7 +58,7 @@ export async function generateGeminiResponse(npcId: string, userMessage: string,
         // Format history nicely
         let contextMessage = "대화 기록 없음";
         if (chatHistory && chatHistory.length > 0) {
-            contextMessage = chatHistory.slice(-6).map((msg: any) => `${msg.role === 'user' ? '학생(공정가)' : 'NPC'}: ${msg.text}`).join('\n');
+            contextMessage = chatHistory.slice(-6).map((msg) => `${msg.role === 'user' ? '학생(공정가)' : 'NPC'}: ${msg.text}`).join('\n');
         }
 
         const fullPrompt = `
@@ -57,19 +74,22 @@ ${contextMessage}
 위 학생의 말에 대한 당신의 응답을 작성하세요:
 `;
 
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: fullPrompt,
-            config: {
-                systemInstruction: "당신은 게임 속 NPC입니다. 절대 AI나 어시스턴트라고 밝히지 마세요. 주어진 롤플레잉 프롬프트에 완벽하게 몰입하여 1~2줄로 짧게 대답하세요. 절대 인사말이나 불필요한 서술 없이 핵심만 말하세요.",
-                temperature: 0.7,
-            }
-        });
+        const response = await withTimeout(
+            ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: fullPrompt,
+                config: {
+                    systemInstruction: "당신은 게임 속 NPC입니다. 절대 AI나 어시스턴트라고 밝히지 마세요. 주어진 롤플레잉 프롬프트에 완벽하게 몰입하여 1~2줄로 짧게 대답하세요. 절대 인사말이나 불필요한 서술 없이 핵심만 말하세요.",
+                    temperature: 0.7,
+                }
+            }),
+            GEMINI_TIMEOUT_MS
+        );
 
         if (response.text) return response.text;
         return null;
     } catch (error) {
-        console.error("Error communicating with Gemini:", error);
-        return null; // Local fallback will handle strings
+        console.error("Gemini API error:", error instanceof Error ? error.message : error);
+        return null; // 로컬 폴백이 처리
     }
 }

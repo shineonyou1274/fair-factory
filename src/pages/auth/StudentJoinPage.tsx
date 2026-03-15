@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Hash, User, Sparkles, Zap } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
@@ -9,6 +10,7 @@ import { MOCK_SESSION, isFirebaseConfigured } from '@/lib/mockData';
 import type { ClassSession } from '@/types';
 
 export default function StudentJoinPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { setSession } = useSessionStore();
     const [code, setCode] = useState('');
@@ -77,8 +79,8 @@ export default function StudentJoinPage() {
                             style={{ background: 'linear-gradient(135deg, #7c3aed, #e94560)' }}>공</div>
                     </Link>
                     <div className="text-5xl mb-3">🌱</div>
-                    <h1 className="text-3xl font-black mb-1 text-white">수업 참여하기</h1>
-                    <p className="text-sm" style={{ color: 'rgba(167,139,250,0.6)' }}>선생님께 받은 학급 코드를 입력하세요</p>
+                    <h1 className="text-3xl font-black mb-1 text-white">{t('auth.student_join')}</h1>
+                    <p className="text-sm" style={{ color: 'rgba(167,139,250,0.6)' }}>{t('auth.enter_code')}</p>
                 </div>
 
                 {/* 테스트 계정 박스 */}
@@ -102,7 +104,7 @@ export default function StudentJoinPage() {
                         onMouseEnter={(e) => { e.currentTarget.style.boxShadow = '0 0 30px rgba(6,214,160,0.5)'; }}
                         onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 0 20px rgba(6,214,160,0.3)'; }}
                     >
-                        <Zap size={14} className="inline mr-1" /> 테스트로 즉시 입장
+                        <Zap size={14} className="inline mr-1" /> {t('auth.test_account')}
                     </button>
                 </motion.div>
 
@@ -111,7 +113,7 @@ export default function StudentJoinPage() {
                     <form onSubmit={handleJoin} className="space-y-5" noValidate>
                         <div>
                             <label htmlFor="classCode" className="block text-xs font-medium mb-2" style={{ color: 'rgba(196,181,253,0.7)' }}>
-                                학급 코드
+                                {t('auth.enter_code')}
                             </label>
                             <div className="relative">
                                 <Hash size={14} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(139,92,246,0.5)' }} />
@@ -126,7 +128,7 @@ export default function StudentJoinPage() {
                         </div>
                         <div>
                             <label htmlFor="playerName" className="block text-xs font-medium mb-2" style={{ color: 'rgba(196,181,253,0.7)' }}>
-                                이름
+                                {t('auth.enter_name')}
                             </label>
                             <div className="relative">
                                 <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'rgba(139,92,246,0.5)' }} />
@@ -143,13 +145,13 @@ export default function StudentJoinPage() {
                             className="w-full py-4 rounded-xl font-black text-base text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                             style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 0 25px rgba(124,58,237,0.4)' }}>
                             <Sparkles size={18} className="inline mr-2" />
-                            {loading ? '입장 중...' : '공정가로 입장하기!'}
+                            {loading ? t('common.loading') : t('auth.join_button')}
                         </button>
                     </form>
                 </div>
 
                 <p className="text-center text-xs mt-5" style={{ color: 'rgba(139,92,246,0.4)' }}>
-                    <Link to="/" className="hover:text-purple-300 transition-colors">← 메인으로</Link>
+                    <Link to="/" className="hover:text-purple-300 transition-colors">{`← ${t('common.back')}`}</Link>
                 </p>
             </motion.div>
         </div>

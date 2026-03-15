@@ -8,8 +8,15 @@
         "submit": "제출",
         "buy": "구매",
         "next": "다음",
+        "previous": "이전",
         "start": "시작",
-        "save": "저장"
+        "save": "저장",
+        "retry": "다시 시도",
+        "error_network": "네트워크를 확인해주세요.",
+        "error_submit": "전송 실패",
+        "error_submit_detail": "서버 전송에 실패했습니다. 네트워크를 확인해주세요.",
+        "saved_locally": "결과는 로컬에 저장되었습니다.",
+        "waiting_teacher": "교사의 최종 승인을 기다리는 중..."
     },
     "landing": {
         "subtitle": "노동·공정무역·구조적 공감 체험 에듀게임",
@@ -37,56 +44,120 @@
         "abilities": "특수 능력"
     },
     "persona": {
-        "Alpha": {
-            "name": "알파",
-            "role": "데이터 분석가",
-            "desc": "숫자와 통계로 세상을 꿰뚫는 냉철한 분석가"
-        },
-        "Delta": {
-            "name": "델타",
-            "role": "평화 중재자",
-            "desc": "갈등을 녹이는 따뜻한 공감과 소통의 달인"
-        },
-        "Omega": {
-            "name": "오메가",
-            "role": "아이디어 설계자",
-            "desc": "창의적 해결책으로 불가능을 가능으로 바꾸는 혁신가"
-        },
-        "Lambda": {
-            "name": "람다",
-            "role": "치유 지원가",
-            "desc": "팀의 에너지를 회복시키는 따뜻한 지원자"
-        },
-        "Sigma": {
-            "name": "시그마",
-            "role": "비판적 감시자",
-            "desc": "불의를 꿰뚫는 예리한 시선의 정의 수호자"
-        }
+        "Alpha": { "name": "알파", "role": "데이터 분석가", "desc": "숫자와 통계로 세상을 꿰뚫는 냉철한 분석가" },
+        "Delta": { "name": "델타", "role": "평화 중재자", "desc": "갈등을 녹이는 따뜻한 공감과 소통의 달인" },
+        "Omega": { "name": "오메가", "role": "아이디어 설계자", "desc": "창의적 해결책으로 불가능을 가능으로 바꾸는 혁신가" },
+        "Lambda": { "name": "람다", "role": "치유 지원가", "desc": "팀의 에너지를 회복시키는 따뜻한 지원자" },
+        "Sigma": { "name": "시그마", "role": "비판적 감시자", "desc": "불의를 꿰뚫는 예리한 시선의 정의 수호자" }
+    },
+    "hud": {
+        "home": "홈으로",
+        "shop": "상점",
+        "notifications": "알림",
+        "logout": "나가기",
+        "logout_confirm": "정말 나가시겠습니까? 진행 상황이 저장되지 않을 수 있습니다.",
+        "team_panel": "우리 모둠",
+        "no_team": "팀원이 아직 없습니다.",
+        "npc_trust": "NPC 신뢰도",
+        "persuaded": "설득 완료",
+        "test": "테스트"
     },
     "game": {
-        "phase0": {
-            "name": "환상의 장막",
-            "desc": "달콤한 유혹 뒤에 숨겨진 진실"
-        },
-        "phase1": {
-            "name": "진실의 돋보기",
-            "desc": "숨겨진 착취의 흔적을 발견하라"
-        },
-        "phase2": {
-            "name": "지혜의 토론",
-            "desc": "이해관계자를 설득하라"
-        },
-        "phase3": {
-            "name": "공정의 설계",
-            "desc": "공정한 가격을 설계하라"
-        },
+        "phase0": { "name": "환상의 장막", "desc": "달콤한 유혹 뒤에 숨겨진 진실" },
+        "phase1": { "name": "진실의 돋보기", "desc": "숨겨진 착취의 흔적을 발견하라" },
+        "phase2": { "name": "지혜의 토론", "desc": "이해관계자를 설득하라" },
+        "phase3": { "name": "공정의 설계", "desc": "공정한 가격을 설계하라" },
+        "phase4": { "name": "성찰의 거울", "desc": "여정을 되돌아보며 성찰하라" },
         "xp": "경험치",
         "teamwork": "팀워크",
         "shop": "상점",
         "notifications": "알림",
         "my_team": "우리 모둠",
         "golden_seal": "황금 인장",
-        "npc_trust": "NPC 신뢰도"
+        "npc_trust": "NPC 신뢰도",
+        "phase_change": "단계 변경!",
+        "loading_game": "게임을 불러오는 중...",
+        "loading": "로딩 중...",
+        "touch_to_start": "화면을 터치하면 시작합니다"
+    },
+    "phase1": {
+        "title": "Phase 1 · 진실의 돋보기",
+        "header": "광고 뒤에 숨긴 것을 찾아라",
+        "report_title": "고발 리포트 작성",
+        "report_placeholder": "발견한 진실들이 어떻게 연결되어 있는지 분석해보세요.",
+        "submit_teacher": "교사에게 제출",
+        "submit_success": "리포트 제출 완료!",
+        "submit_waiting": "교사의 황금 인장 승인을 기다리는 중입니다...",
+        "min_truths": "최소 3개 이상 발견 시 고발 리포트를 제출할 수 있습니다"
+    },
+    "phase2": {
+        "title": "Phase 2 · 지혜의 토론",
+        "persuade_status": "설득 현황:",
+        "persuade_target": "3명 이상 설득 시 Phase 3 진입",
+        "rounds_exhausted": "이 NPC와의 라운드가 종료됐습니다. 다른 NPC와 대화하세요.",
+        "action_used": "사용 완료 (1회/세션)",
+        "persuade_complete": "3명 이상 설득 완료!",
+        "send_result": "선생님께 결과 전송",
+        "result_sent": "결과가 전송되었습니다."
+    },
+    "phase3": {
+        "title": "Phase 3 · 공정의 설계",
+        "header": "최적의 공정가를 설계하라",
+        "subtitle": "슬라이더를 조작하여 모두가 납득할 수 있는 가격 구조를 만드세요",
+        "final_price": "최종 소비자가",
+        "fair_level_fair": "공정 가격",
+        "fair_level_partial": "개선 필요",
+        "fair_level_unfair": "불공정",
+        "fair_index": "공정 지수",
+        "panel_title": "가격 조절 패널",
+        "farm_cost": "카카오 원가",
+        "farmer_margin": "농장주 마진",
+        "premium_margin": "공정무역기금",
+        "coop_margin": "협동조합 마진",
+        "dist_margin": "유통업자 마진",
+        "retail_margin": "소매상 마진",
+        "revenue_distribution": "수익 분배율",
+        "farmer_income": "농장주 실수령액",
+        "fair_met": "공정 기준 충족",
+        "fair_unmet": "목표 15% 미달",
+        "submit_fair": "공정가 확정 & 제출!",
+        "submit_current": "현재 가격으로 제출하기",
+        "submit_done": "제출 완료!",
+        "real_data_title": "실제 수익 분배 (2023)"
+    },
+    "phase4": {
+        "title": "Phase 4 · 성찰의 거울",
+        "header": "나를 되돌아보는 시간",
+        "subtitle": "게임을 통해 배운 것, 느낀 것, 실천할 것을 기록하세요",
+        "pledge_title": "나의 행동 약속",
+        "pledge_subtitle": "오늘 이후 실천할 약속을 하나 선택하세요",
+        "pledge_custom": "나만의 약속 직접 쓰기",
+        "pledge_custom_placeholder": "나만의 행동 약속을 적어보세요...",
+        "submit_journal": "성찰 저널 제출하기",
+        "all_required": "모든 질문에 5자 이상 답변하면 제출할 수 있습니다",
+        "ending_complete": "모든 미션 완수!",
+        "ending_subtitle": "침묵의 성곽이 무너졌습니다",
+        "ending_finish": "여정 마무리하기 →",
+        "reflection_done": "성찰 완료!",
+        "share_pledge": "약속 공유하기"
+    },
+    "briefing": {
+        "phase0_mission": "화면의 광고를 보고 구매할지 결정하세요!",
+        "phase0_tip": "직감을 믿으세요. 나중에 놀랄 수 있어요.",
+        "phase1_mission": "화면을 문질러서 숨겨진 진실을 발견하세요!",
+        "phase1_tip": "밝은 부분 아래에 진실이 숨어있습니다.",
+        "phase2_mission": "5명의 NPC와 대화하여 설득하세요!",
+        "phase2_tip": "각 NPC의 약점을 파악하면 더 쉽게 설득할 수 있어요.",
+        "phase3_mission": "공정한 가격 구조를 설계하세요!",
+        "phase3_tip": "농부의 수입이 충분한지 확인해보세요.",
+        "phase4_mission": "여정을 돌아보며 성찰 저널을 작성하세요!",
+        "phase4_tip": "솔직한 마음을 적어주세요. 정답은 없습니다.",
+        "touch_to_start": "화면을 터치하면 시작합니다"
+    },
+    "error": {
+        "title": "오류가 발생했습니다",
+        "desc": "일시적인 문제가 발생했습니다. 아래 버튼을 눌러 다시 시도해주세요.",
+        "game_error": "게임 화면을 불러올 수 없습니다"
     },
     "shop": {
         "title": "공정가 상점",
@@ -107,7 +178,7 @@
         "stats": "세부 통계",
         "export_csv": "결과 CSV 내보내기",
         "end_class": "수업 마치기",
-        "well_done": "수고하셨습니다! 침묵의 성이 다시 빛을 되찾았습니다. ✨"
+        "well_done": "수고하셨습니다! 침묵의 성이 다시 빛을 되찾았습니다."
     },
     "notifications": {
         "no_notifications": "알림이 없습니다",

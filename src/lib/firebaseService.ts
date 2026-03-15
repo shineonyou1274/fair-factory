@@ -78,7 +78,7 @@ export const SessionService = {
             updatedAt: Date.now(),
             settings: {
                 maxGroupSize: (options?.maxGroupSize ?? 5) as 3 | 4 | 5,
-                minGroupSize: 2 as unknown as 3 | 4 | 5,  // 유연한 설정을 위해
+                minGroupSize: 2,
                 allowPersonaChoice: false,
                 phaseTimeLimits: { 0: null, 1: 600, 2: 900, 3: 600, 4: null },
                 language: options?.language ?? 'ko',
@@ -211,7 +211,7 @@ export const StudentService = {
             inventoryItems: [],
             joinedAt: Date.now(),
             sessionCode,
-        } as any;
+        };
 
         // 5. Firestore에 학생 저장
         await setDoc(doc(db, 'sessions', sessionCode, 'students', user.uid), {
@@ -249,7 +249,7 @@ export const StudentService = {
         const snap = await getDoc(studentRef);
         if (!snap.exists()) return;
         const data = snap.data();
-        const totalXp = Object.values(data.xp ?? {}).reduce((a: number, b: any) => a + (b as number), 0);
+        const totalXp = Object.values(data.xp ?? {}).reduce((a: number, b: unknown) => a + (b as number), 0);
         if (totalXp < cost) throw new Error('XP_INSUFFICIENT');
 
         await updateDoc(studentRef, {
@@ -259,7 +259,7 @@ export const StudentService = {
     },
 
     /** 리포트 제출 (Phase별) */
-    async submitReport(sessionCode: string, studentId: string, phase: number, content: string, data?: any) {
+    async submitReport(sessionCode: string, studentId: string, phase: number, content: string, data?: Record<string, unknown>) {
         await updateDoc(doc(db, 'sessions', sessionCode, 'students', studentId), {
             reportSubmitted: true,
             [`submissions.phase${phase}`]: {
@@ -282,7 +282,7 @@ export const StudentService = {
     },
 
     /** 학생 현황 실시간 구독 */
-    subscribePresence(sessionCode: string, callback: (presence: Record<string, any>) => void): () => void {
+    subscribePresence(sessionCode: string, callback: (presence: Record<string, unknown>) => void): () => void {
         const presenceRef = ref(rtdb, `sessions/${sessionCode}/presence`);
         onValue(presenceRef, snap => {
             callback(snap.val() ?? {});
@@ -304,7 +304,7 @@ export const ReportService = {
     },
 
     /** 채팅 메시지 저장 */
-    async saveChat(sessionCode: string, studentId: string, npcId: string, messages: any[]) {
+    async saveChat(sessionCode: string, studentId: string, npcId: string, messages: Array<Record<string, unknown>>) {
         await setDoc(doc(db, 'chatLogs', `${sessionCode}_${studentId}_${npcId}`), {
             sessionCode,
             studentId,

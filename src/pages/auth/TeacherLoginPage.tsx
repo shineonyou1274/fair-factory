@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Mail, Lock, GraduationCap, Chrome, Zap } from 'lucide-react';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
@@ -10,6 +11,7 @@ import { MOCK_TEACHER, isFirebaseConfigured } from '@/lib/mockData';
 import type { TeacherUser } from '@/types';
 
 export default function TeacherLoginPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { setUser } = useAuthStore();
     const [email, setEmail] = useState('');
@@ -127,7 +129,7 @@ export default function TeacherLoginPage() {
                         <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-white"
                             style={{ background: 'linear-gradient(135deg, #7c3aed, #e94560)' }}>공</div>
                     </Link>
-                    <h1 className="text-3xl font-black mb-1 text-white">교사 로그인</h1>
+                    <h1 className="text-3xl font-black mb-1 text-white">{t('auth.teacher_login')}</h1>
                     <p className="text-sm" style={{ color: 'rgba(167,139,250,0.6)' }}>Game Master로 수업을 시작하세요</p>
                 </div>
 
@@ -156,7 +158,7 @@ export default function TeacherLoginPage() {
                         onMouseLeave={(e) => { e.currentTarget.style.boxShadow = '0 0 20px rgba(124,58,237,0.4)'; }}
                     >
                         <Zap size={14} className="inline mr-1" />
-                        테스트 교사 계정으로 즉시 입장
+                        {t('auth.test_account')}
                     </button>
                 </motion.div>
 
@@ -212,13 +214,13 @@ export default function TeacherLoginPage() {
                             className="w-full py-3 rounded-xl font-bold text-sm text-white mt-1 transition-all"
                             style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)' }}>
                             <GraduationCap size={16} className="inline mr-2" />
-                            {loading ? '로그인 중...' : '로그인'}
+                            {loading ? t('common.loading') : t('auth.teacher_login')}
                         </button>
                     </form>
                 </div>
 
                 <p className="text-center text-xs mt-5" style={{ color: 'rgba(139,92,246,0.4)' }}>
-                    <Link to="/" className="hover:text-purple-300 transition-colors">← 랜딩 페이지로</Link>
+                    <Link to="/" className="hover:text-purple-300 transition-colors">{`← ${t('common.back')}`}</Link>
                 </p>
             </motion.div>
         </div>

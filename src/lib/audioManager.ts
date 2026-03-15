@@ -81,10 +81,11 @@ class AudioManager {
     }
 
     private _startBGM(path: string) {
-        // 이전 BGM 즉시 정지 (겹침 방지)
+        // 이전 BGM 즉시 정지 (겹침 방지 + 리소스 해제)
         if (this.bgmAudio) {
             this.bgmAudio.pause();
-            this.bgmAudio.src = '';
+            this.bgmAudio.removeAttribute('src');
+            this.bgmAudio.load();
             this.bgmAudio = null;
         }
 
@@ -115,9 +116,19 @@ class AudioManager {
     stopBGM() {
         if (this.bgmAudio) {
             this.bgmAudio.pause();
-            this.bgmAudio.src = '';
+            this.bgmAudio.removeAttribute('src');
+            this.bgmAudio.load(); // 리소스 해제
             this.bgmAudio = null;
             this.currentBGM = null;
+        }
+    }
+
+    /** AudioContext 및 리소스 정리 */
+    destroy() {
+        this.stopBGM();
+        if (this._ctx) {
+            this._ctx.close().catch(() => {});
+            this._ctx = null;
         }
     }
 

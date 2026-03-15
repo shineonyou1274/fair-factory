@@ -3,12 +3,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Zap, CheckCircle, Lock, Timer, ChevronDown, ChevronUp } from 'lucide-react';
 import type { NpcCharacter } from '@/types';
 import TutorialOverlay from '@/components/ui/TutorialOverlay';
-import { useSessionStore } from '@/store';
+import { useSessionStore, useAuthStore } from '@/store';
+import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const MAX_ROUNDS = 5;      // NPC당 최대 발언 횟수
 const TIMER_SECONDS = 180;  // NPC당 대화 제한 시간(초) - 변경: 사용자가 여유롭게 읽고 쓰도록 180초로 연장
 
 interface Props { persona: string; npcs: NpcCharacter[]; }
+
+interface ChatMsg {
+    role: 'user' | 'npc';
+    text: string;
+    persona?: string;
+    npcName?: string;
+    npcEmoji?: string;
+    color?: string;
+    timestamp: number;
+}
 
 // Persona action card config
 const ACTION_CARDS: Record<string, { label: string; emoji: string; color: string; prompt: string }> = {
@@ -63,7 +75,7 @@ const NPC_PROFILES: Record<string, { title: string; bg: string; desc: string; pe
 };
 
 // ─── NPC Response Generator (mock AI, context-aware) ─────────
-function generateNpcResponse(npc: NpcCharacter, userMsg: string, persona: string, history: any[] = []): string {
+function generateNpcResponse(npc: NpcCharacter, userMsg: string, persona: string, history: ChatMsg[] = []): string {
     const lower = userMsg.toLowerCase();
     const hasChallenge = lower.includes('왜') || lower.includes('어떻게') || lower.includes('출처') || lower.includes('실제') || lower.includes('데이터') || lower.includes('수치');
     const hasEmpathy = lower.includes('이해') || lower.includes('함께') || lower.includes('어렵') || lower.includes('힘드') || lower.includes('걱정') || lower.includes('도와');
@@ -242,6 +254,7 @@ function NpcSelector({ npcs, selected, onSelect }: { npcs: NpcCharacter[]; selec
 
 // ─── Phase 2 Main ─────────────────────────────────────────────
 export default function Phase2({ persona, npcs: initNpcs }: Props) {
+    const { t } = useTranslation();
     const defaultNpcs: NpcCharacter[] = [
         { id: 'gorex', name: '고렉스', role: '대형 유통업자', emoji: '😈', hiddenAgenda: '', weakness: '', trustLevel: 20, isPersuaded: false },
         { id: 'tierra', name: '티에라', role: '소규모 농장주', emoji: '😔', hiddenAgenda: '', weakness: '', trustLevel: 40, isPersuaded: false },
@@ -251,12 +264,14 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     ];
     const [npcs, setNpcs] = useState<NpcCharacter[]>(initNpcs.length ? initNpcs : defaultNpcs);
     const [selectedNpc, setSelectedNpc] = useState<string>(npcs[0]?.id ?? 'gorex');
-    const [messages, setMessages] = useState<Record<string, any[]>>({});
+    const [messages, setMessages] = useState<Record<string, ChatMsg[]>>({});
     const [input, setInput] = useState('');
     const [actionUsed, setActionUsed] = useState(false);
     const [sending, setSending] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const { sessionId, studentId } = useSessionStore();
+    const [submitError, setSubmitError] = useState(false);
+    const { sessionId } = useParams();
+    const studentId = useAuthStore(s => s.studentProfile?.studentId);
     // 라운드 제한: NPC별 남은 발언 횟수
     const [npcRounds, setNpcRounds] = useState<Record<string, number>>(
         () => Object.fromEntries((initNpcs.length ? initNpcs : defaultNpcs).map(n => [n.id, MAX_ROUNDS]))
@@ -417,12 +432,12 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                 <div className="text-center mb-2 flex-shrink-0 relative z-10">
                     <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
                         style={{ background: 'rgba(6,214,160,0.15)', border: '1px solid rgba(6,214,160,0.3)', color: '#06d6a0' }}>
-                        Phase 2 · 지혜의 토론
+                        {t('phase2.title')}
                     </span>
                     <div className="mt-3 flex items-center justify-center gap-2 text-sm">
-                        <span style={{ color: 'rgba(196,181,253,0.6)' }}>설득 현황:</span>
+                        <span style={{ color: 'rgba(196,181,253,0.6)' }}>{t('phase2.persuade_status')}</span>
                         <strong style={{ color: '#fbbf24' }}>{persuadeCount}/5</strong>
-                        <span style={{ color: 'rgba(196,181,253,0.4)' }}>— 3명 이상 설득 시 Phase 3 진입</span>
+                        <span style={{ color: 'rgba(196,181,253,0.4)' }}>— {t('phase2.persuade_target')}</span>
                     </div>
                 </div>
 
@@ -560,14 +575,14 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                         {actionUsed ? <Lock size={12} /> : <Zap size={12} />}
                         {action?.emoji} {action?.label}
                     </motion.button>
-                    {actionUsed && <span className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>사용 완료 (1회/세션)</span>}
+                    {actionUsed && <span className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>{t('phase2.action_used')}</span>}
                 </div>
 
                 {/* 라운드 소진 안내 */}
                 {isExhausted && (
                     <div className="mb-2 px-4 py-2 rounded-xl text-xs text-center"
                         style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e' }}>
-                        ⚠️ 이 NPC와의 라운드가 종료됐습니다. 다른 NPC와 대화하세요.
+                        ⚠️ {t('phase2.rounds_exhausted')}
                     </div>
                 )}
 
@@ -604,7 +619,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                             className="mt-4 rounded-2xl p-5 text-center"
                             style={{ background: 'rgba(6,214,160,0.12)', border: '1px solid rgba(6,214,160,0.35)' }}>
                             <div className="text-3xl mb-2">🎉</div>
-                            <p className="font-black text-white text-lg mb-1">3명 이상 설득 완료!</p>
+                            <p className="font-black text-white text-lg mb-1">{t('phase2.persuade_complete')}</p>
                             <p className="text-sm mb-4" style={{ color: 'rgba(6,214,160,0.8)' }}>
                                 선생님이 Phase 3으로 넘겨주실 때까지 추가 대화가 가능합니다.
                             </p>
@@ -612,20 +627,30 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
                                 <button
                                     onClick={() => {
                                         setSubmitted(true);
+                                        setSubmitError(false);
                                         if (sessionId && studentId) {
                                             const content = `[설득 성공: ${persuadeCount}명]\n설득된 NPC: ${npcs.filter(n => n.isPersuaded).map(n => n.name).join(', ')}`;
-                                            import('@/lib/firebaseService').then(({ StudentService }) => {
-                                                StudentService.submitReport(sessionId, studentId, 2, content, { npcs }).catch(console.error);
+                                            import('@/lib/mockData').then(({ isFirebaseConfigured }) => {
+                                                if (!isFirebaseConfigured()) return;
+                                                import('@/lib/firebaseService').then(({ StudentService }) => {
+                                                    StudentService.submitReport(sessionId, studentId, 2, content, { npcs: npcs as unknown as Record<string, unknown> }).catch(() => {
+                                                        setSubmitError(true);
+                                                    });
+                                                });
                                             });
                                         }
                                     }}
                                     className="px-6 py-3 rounded-xl font-bold text-white transition-all hover:scale-105 mx-auto flex items-center gap-2"
                                     style={{ background: 'linear-gradient(135deg, #06d6a0, #04b083)', boxShadow: '0 0 20px rgba(6,214,160,0.4)' }}>
-                                    <Send size={16} /> 선생님께 결과 전송
+                                    <Send size={16} /> {t('phase2.send_result')}
                                 </button>
+                            ) : submitError ? (
+                                <div className="text-sm font-bold flex items-center justify-center gap-2" style={{ color: '#f43f5e' }}>
+                                    ⚠️ {t('common.error_submit')} — {t('common.error_network')}
+                                </div>
                             ) : (
                                 <div className="text-sm font-bold flex items-center justify-center gap-2" style={{ color: '#06d6a0' }}>
-                                    <CheckCircle size={16} /> 결과가 전송되었습니다.
+                                    <CheckCircle size={16} /> {t('phase2.result_sent')}
                                 </div>
                             )}
                         </motion.div>

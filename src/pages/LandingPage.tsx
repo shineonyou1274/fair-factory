@@ -2,8 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { GraduationCap, Sparkles, ChevronRight, Globe, ChevronDown, Link2, Scale, Swords } from 'lucide-react';
-import { useUIStore } from '@/store';
 import { audioManager } from '@/lib/audioManager';
+import { useTranslation } from 'react-i18next';
 
 // ─── Chain Link Decoration ────────────────────────────────────
 function ChainLinks({ className }: { className?: string }) {
@@ -126,16 +126,18 @@ function PhaseCard({
 // ─── Main ─────────────────────────────────────────────────────
 export default function LandingPage() {
     const navigate = useNavigate();
-    const { setLanguage, language } = useUIStore();
+    const { t } = useTranslation();
     const { scrollY } = useScroll();
     const [introStep, setIntroStep] = useState(0);
+    const [isShaking, setIsShaking] = useState(false);
+    const [langToast, setLangToast] = useState(false);
 
     const introDialogues = [
         "똑똑! 저희 목소리가 들리시나요?",
-        "누군가 도와주러 온 것 같아!",
-        "이곳은 마몬의 탐욕에 갇힌 '침묵의 성'입니다.",
+        "문에 금이 가기 시작했어요! 계속 두드려주세요!",
+        "조금만 더 세게! 💥",
+        "거의 다 열렸습니다! 마지막으로 한 번 더!",
         "현자들을 구출하고 공정의 노래를 되찾아주세요!",
-        "자, 화면을 살펴보고 '공정가'가 되어주세요!",
     ];
 
     useEffect(() => {
@@ -146,10 +148,20 @@ export default function LandingPage() {
         }
     }, [introStep]);
 
+    useEffect(() => {
+        if (langToast) {
+            const timer = setTimeout(() => setLangToast(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [langToast]);
+
     const nextIntro = () => {
         if (introStep < introDialogues.length) {
+            setIsShaking(true);
+            setTimeout(() => setIsShaking(false), 300);
+
             setIntroStep(s => s + 1);
-            if (introStep > 0) audioManager.playSFX('click');
+            audioManager.playSFX('click');
         }
     };
 
@@ -176,6 +188,21 @@ export default function LandingPage() {
         <div className="min-h-screen overflow-x-hidden"
             style={{ background: 'linear-gradient(180deg, #0a0618 0%, #110d2e 40%, #0d0d1a 100%)' }}>
 
+            {/* 언어 전환 준비중 토스트 */}
+            <AnimatePresence>
+                {langToast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -30 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -30 }}
+                        className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-xl text-sm font-bold text-white"
+                        style={{ background: 'rgba(124,58,237,0.9)', border: '1px solid rgba(167,139,250,0.5)', boxShadow: '0 10px 30px rgba(0,0,0,0.4)' }}
+                    >
+                        🌐 영어 모드 준비중입니다
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
             {/* ── Sticky Header ── */}
             <header className="fixed top-0 left-0 right-0 z-50"
                 style={{ background: 'rgba(10,6,24,0.7)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(139,92,246,0.15)' }}>
@@ -193,26 +220,26 @@ export default function LandingPage() {
 
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
+                            onClick={() => setLangToast(true)}
                             className="p-2 rounded-lg text-purple-300 hover:text-white hover:bg-white/10 transition-all text-sm flex items-center gap-1"
                             aria-label="언어 변경"
                         >
-                            <Globe size={14} /> {language === 'ko' ? 'EN' : 'KO'}
+                            <Globe size={14} /> EN
                         </button>
                         <button
                             onClick={() => navigate('/teacher/login')}
-                            aria-label="교사 로그인 - Game Master로 수업 진행하기"
+                            aria-label={t('landing.cta_teacher')}
                             className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-purple-200 hover:text-white border border-purple-500/30 hover:border-purple-400/60 hover:bg-purple-500/10 transition-all"
                         >
-                            <GraduationCap size={15} /> 교사 로그인
+                            <GraduationCap size={15} /> {t('landing.cta_teacher')}
                         </button>
                         <button
                             onClick={() => navigate('/join')}
-                            aria-label="학생으로 게임 참여하기"
+                            aria-label={t('landing.cta_student')}
                             className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white transition-all"
                             style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}
                         >
-                            <Sparkles size={14} /> 학생 입장
+                            <Sparkles size={14} /> {t('landing.cta_student')}
                         </button>
                     </div>
                 </nav>
@@ -284,11 +311,14 @@ export default function LandingPage() {
                             />
 
                             <motion.div
-                                key={introStep}
                                 initial={{ opacity: 0, scale: 0.85, y: 30, rotateX: 10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0, rotateX: 0 }}
+                                animate={{
+                                    opacity: 1, scale: 1, y: 0, rotateX: 0,
+                                    x: isShaking ? [-10, 10, -15, 15, -5, 5, 0] : 0,
+                                    rotateZ: isShaking ? [-2, 2, -3, 3, -1, 1, 0] : 0
+                                }}
                                 exit={{ opacity: 0, scale: 0.9, y: -20, filter: 'blur(10px)' }}
-                                transition={{ type: 'spring', damping: 20, stiffness: 100 }}
+                                transition={{ type: 'spring', damping: 20, stiffness: 100, duration: isShaking ? 0.3 : 0.8 }}
                                 className="relative px-8 py-10 rounded-[2rem] max-w-md w-full text-center shadow-2xl"
                                 style={{
                                     background: 'linear-gradient(145deg, rgba(88,28,135,0.4), rgba(46,16,101,0.6))',
@@ -297,34 +327,54 @@ export default function LandingPage() {
                                     backdropFilter: 'blur(16px)'
                                 }}
                             >
-                                <motion.div
-                                    className="text-5xl mb-6 mx-auto w-20 h-20 flex items-center justify-center rounded-3xl"
-                                    animate={{ y: [0, -10, 0] }}
-                                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                                    style={{
-                                        background: 'rgba(139,92,246,0.2)',
-                                        border: '1px solid rgba(167,139,250,0.4)',
-                                        boxShadow: '0 0 20px rgba(139,92,246,0.3)'
-                                    }}
-                                >
-                                    {introStep === 0 ? '🆘' : introStep === introDialogues.length - 1 ? '✨' : '💬'}
-                                </motion.div>
-                                <p className="text-xl sm:text-2xl font-black text-white leading-relaxed mb-10 tracking-wide" style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
-                                    {introDialogues[introStep]}
-                                </p>
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={introStep}
+                                        initial={{ opacity: 0, scale: 0.8 }}
+                                        animate={{ opacity: 1, scale: 1, y: [0, -10, 0] }}
+                                        exit={{ opacity: 0, scale: 1.2 }}
+                                        transition={{ duration: 0.4 }}
+                                        className="text-5xl mb-6 mx-auto w-20 h-20 flex items-center justify-center rounded-3xl"
+                                        style={{
+                                            background: 'rgba(139,92,246,0.2)',
+                                            border: '1px solid rgba(167,139,250,0.4)',
+                                            boxShadow: '0 0 20px rgba(139,92,246,0.3)'
+                                        }}
+                                    >
+                                        {introStep === 0 ? '🆘' : introStep === introDialogues.length - 1 ? '✨' : '💥'}
+                                    </motion.div>
+                                </AnimatePresence>
+
+                                <AnimatePresence mode="wait">
+                                    <motion.p
+                                        key={introStep}
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="text-xl sm:text-2xl font-black text-white leading-relaxed mb-10 tracking-wide"
+                                        style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)', minHeight: '60px' }}
+                                    >
+                                        {introDialogues[introStep]}
+                                    </motion.p>
+                                </AnimatePresence>
 
                                 <div className="flex flex-col items-center gap-2">
                                     <motion.div
-                                        className="h-1 bg-purple-500 rounded-full mb-3"
+                                        className="h-1 bg-rose-500 rounded-full mb-3"
                                         initial={{ width: 0 }}
                                         animate={{ width: `${((introStep + 1) / introDialogues.length) * 100}%` }}
                                         transition={{ duration: 0.5 }}
                                     />
-                                    <div className="text-xs font-bold tracking-widest animate-pulse flex items-center gap-2" style={{ color: 'rgba(196,181,253,0.9)' }}>
+                                    <motion.div
+                                        animate={{ scale: isShaking ? 1.1 : 1 }}
+                                        className="text-xs font-bold tracking-widest animate-pulse flex items-center gap-2"
+                                        style={{ color: 'rgba(244,63,94,0.9)' }}
+                                    >
                                         <ChevronRight size={14} />
-                                        화면을 터치해서 다음 읽기 ({introStep + 1}/{introDialogues.length})
+                                        화면을 터치해서 문을 더 세게 두드려주세요!
                                         <ChevronRight size={14} />
-                                    </div>
+                                    </motion.div>
                                 </div>
                             </motion.div>
                         </motion.div>
@@ -350,7 +400,7 @@ export default function LandingPage() {
                         }}
                     >
                         <Link2 size={11} />
-                        에듀테크 롤플레잉 시뮬레이션
+                        {t('landing.subtitle')}
                     </motion.div>
 
                     {/* Title */}
@@ -437,7 +487,7 @@ export default function LandingPage() {
                     >
                         <button
                             onClick={() => navigate('/join')}
-                            aria-label="학생으로 게임 참여하기 - 공정가로 합류"
+                            aria-label={t('landing.cta_student')}
                             className="group flex items-center gap-3 px-10 py-4 rounded-2xl font-black text-lg text-white w-full sm:w-auto justify-center transition-all duration-300 hover:-translate-y-0.5 active:scale-95"
                             style={{
                                 background: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
@@ -445,12 +495,12 @@ export default function LandingPage() {
                             }}
                         >
                             <Sparkles size={20} />
-                            30분으로 세상을 바꾸는 수업 시작하기 (학생용)
+                            {t('landing.cta_student')}
                             <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />
                         </button>
                         <button
                             onClick={() => navigate('/teacher/login')}
-                            aria-label="교사 로그인 - Game Master로 수업 진행하기"
+                            aria-label={t('landing.cta_teacher')}
                             className="flex items-center gap-3 px-8 py-4 rounded-2xl font-bold text-base w-full sm:w-auto justify-center transition-all duration-300 hover:brightness-125 active:scale-95"
                             style={{
                                 background: 'rgba(245,162,35,0.12)',
@@ -460,7 +510,7 @@ export default function LandingPage() {
                             }}
                         >
                             <GraduationCap size={18} />
-                            Game Master 입장 (교사용)
+                            {t('landing.cta_teacher')}
                         </button>
                     </motion.div>
 
@@ -772,7 +822,7 @@ export default function LandingPage() {
                             onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 0 40px rgba(124,58,237,0.5)'; }}
                         >
                             <Swords size={24} />
-                            공정가로 시작하기
+                            {t('landing.cta_student')}
                         </button>
                         <button onClick={() => navigate('/teacher/login')}
                             className="flex items-center gap-3 px-8 py-5 rounded-2xl font-bold text-base border transition-all duration-300 w-full sm:w-auto justify-center"
@@ -781,7 +831,7 @@ export default function LandingPage() {
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.boxShadow = 'none'; }}
                         >
                             <Scale size={18} />
-                            교사로 시작하기
+                            {t('landing.cta_teacher')}
                         </button>
                     </div>
                 </motion.div>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Send, Heart, Download, Share2, CheckCircle, Sparkles } from 'lucide-react';
-import { useSessionStore } from '@/store';
+import { useSessionStore, useAuthStore } from '@/store';
+import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface Props {
     persona: string;
@@ -55,35 +57,46 @@ const ACTION_PLEDGES = [
     { emoji: '🛒', text: '가격이 조금 비싸도 윤리적 제품을 선택해본다' },
     { emoji: '📱', text: 'SNS에 공정무역에 대해 한 번 포스팅한다' },
     { emoji: '📖', text: '공정무역 관련 도서나 영상을 하나 더 찾아본다' },
-    { emoji: '✍️', text: '나만의 약속 직접 쓰기' },
+    { emoji: '✍️', text: '__custom__' },
 ];
 
+const CUSTOM_PLEDGE_KEY = '__custom__';
+
 export default function Phase4({ persona, playerName, xp }: Props) {
-    const { sessionId, studentId } = useSessionStore();
+    const { sessionId } = useParams();
+    const studentId = useAuthStore(s => s.studentProfile?.studentId);
+    const { t } = useTranslation();
     const [answers, setAnswers] = useState<Record<string, string>>({});
     const [currentQ, setCurrentQ] = useState(0);
     const [selectedPledge, setSelectedPledge] = useState<string | null>(null);
     const [customPledge, setCustomPledge] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [submitError, setSubmitError] = useState(false);
     const [showEnding, setShowEnding] = useState(false);
 
     const q = REFLECTION_QUESTIONS[currentQ];
     const answeredCount = Object.values(answers).filter(v => v.trim().length >= 5).length;
     const allAnswered = answeredCount >= REFLECTION_QUESTIONS.length;
-    const pledge = selectedPledge === '✍️ 나만의 약속 직접 쓰기'
+    const pledge = selectedPledge === CUSTOM_PLEDGE_KEY
         ? customPledge
         : selectedPledge;
 
     function handleSubmit() {
         setShowEnding(true);
+        setSubmitError(false);
         if (sessionId && studentId) {
             const content = Object.entries(answers).map(([qId, a]) => {
                 const qText = REFLECTION_QUESTIONS.find(q => q.id === qId)?.question;
                 return `Q. ${qText}\nA. ${a}`;
             }).join('\n\n') + `\n\n[행동 약속]\n${pledge}`;
 
-            import('@/lib/firebaseService').then(({ StudentService }) => {
-                StudentService.submitReport(sessionId, studentId, 4, content, { answers, pledge }).catch(console.error);
+            import('@/lib/mockData').then(({ isFirebaseConfigured }) => {
+                if (!isFirebaseConfigured()) return;
+                import('@/lib/firebaseService').then(({ StudentService }) => {
+                    StudentService.submitReport(sessionId, studentId, 4, content, { answers, pledge } as Record<string, unknown>).catch(() => {
+                        setSubmitError(true);
+                    });
+                });
             });
         }
     }
@@ -104,8 +117,8 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                         className="text-6xl mb-6">✨</motion.div>
                     <motion.h2 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
                         className="text-3xl sm:text-5xl font-black text-white mb-6 leading-tight">
-                        <span style={{ color: '#fbbf24' }}>모든 미션 완수!</span><br />
-                        침묵의 성곽이 무너졌습니다
+                        <span style={{ color: '#fbbf24' }}>{t('phase4.ending_complete')}</span><br />
+                        {t('phase4.ending_subtitle')}
                     </motion.h2>
                     <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
                         className="text-base sm:text-lg mb-10 leading-relaxed" style={{ color: 'rgba(196,181,253,0.9)' }}>
@@ -134,7 +147,7 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                         onClick={() => { setShowEnding(false); setSubmitted(true); }}
                         className="px-8 py-4 rounded-xl font-bold text-white transition-all hover:scale-105 mx-auto block"
                         style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)', boxShadow: '0 0 30px rgba(251,191,36,0.4)' }}>
-                        여정 마무리하기 →
+                        {t('phase4.ending_finish')}
                     </motion.button>
                 </div>
             </motion.div>
@@ -150,7 +163,13 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
                         transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
                         className="text-8xl mb-6">🌟</motion.div>
-                    <h2 className="text-3xl font-black text-white mb-3">성찰 완료!</h2>
+                    <h2 className="text-3xl font-black text-white mb-3">{t('phase4.reflection_done')}</h2>
+                    {submitError && (
+                        <div className="rounded-xl px-4 py-2 mb-4 text-xs"
+                            style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e' }}>
+                            ⚠️ {t('common.error_submit')} — {t('common.error_network')}
+                        </div>
+                    )}
                     <p className="text-sm mb-6" style={{ color: 'rgba(196,181,253,0.7)' }}>
                         {playerName}님의 성찰 저널이 기록되었습니다.
                     </p>
@@ -184,12 +203,12 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                             }}
                             className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm text-white"
                             style={{ background: 'rgba(124,58,237,0.3)', border: '1px solid rgba(124,58,237,0.5)' }}>
-                            <Share2 size={14} /> 약속 공유하기
+                            <Share2 size={14} /> {t('phase4.share_pledge')}
                         </motion.button>
                     </div>
 
                     <p className="text-xs mt-8" style={{ color: 'rgba(139,92,246,0.35)' }}>
-                        교사의 최종 결과 확인을 기다리는 중...
+                        {t('common.waiting_teacher')}
                     </p>
                     <div className="flex items-center justify-center gap-2 mt-2">
                         {[0, 1, 2].map(i => (
@@ -210,13 +229,13 @@ export default function Phase4({ persona, playerName, xp }: Props) {
             <div className="text-center mb-8">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-xs font-bold uppercase tracking-widest"
                     style={{ background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.3)', color: '#38bdf8' }}>
-                    <BookOpen size={12} /> Phase 4 · 성찰의 거울
+                    <BookOpen size={12} /> {t('phase4.title')}
                 </span>
                 <h2 className="text-3xl font-black text-white mb-2">
-                    나를 되돌아보는 시간
+                    {t('phase4.header')}
                 </h2>
                 <p style={{ color: 'rgba(196,181,253,0.6)' }}>
-                    게임을 통해 배운 것, 느낀 것, 실천할 것을 기록하세요
+                    {t('phase4.subtitle')}
                 </p>
             </div>
 
@@ -288,14 +307,14 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                                 <button onClick={() => setCurrentQ(currentQ - 1)}
                                     className="px-4 py-2 rounded-xl text-xs font-bold transition-all"
                                     style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(196,181,253,0.6)' }}>
-                                    ← 이전
+                                    ← {t('common.previous')}
                                 </button>
                             )}
                             {currentQ < REFLECTION_QUESTIONS.length - 1 ? (
                                 <button onClick={() => setCurrentQ(currentQ + 1)}
                                     className="px-4 py-2 rounded-xl text-xs font-bold text-white transition-all"
                                     style={{ background: `${q.color}40` }}>
-                                    다음 →
+                                    {t('common.next')} →
                                 </button>
                             ) : (
                                 (answers[q.id] ?? '').trim().length >= 5 && (
@@ -316,10 +335,10 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                     style={{ background: 'rgba(6,214,160,0.06)', border: '1px solid rgba(6,214,160,0.25)' }}>
                     <h3 className="font-black text-white mb-1 flex items-center gap-2">
                         <Heart size={16} style={{ color: '#06d6a0' }} />
-                        나의 행동 약속
+                        {t('phase4.pledge_title')}
                     </h3>
                     <p className="text-xs mb-4" style={{ color: 'rgba(6,214,160,0.7)' }}>
-                        오늘 이후 실천할 약속을 하나 선택하세요
+                        {t('phase4.pledge_subtitle')}
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
@@ -338,7 +357,7 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                                     color: selectedPledge === p.text ? '#06d6a0' : 'rgba(196,181,253,0.7)',
                                 }}>
                                 <span className="text-lg">{p.emoji}</span>
-                                <span className="font-medium">{p.text}</span>
+                                <span className="font-medium">{p.text === CUSTOM_PLEDGE_KEY ? t('phase4.pledge_custom') : p.text}</span>
                                 {selectedPledge === p.text && (
                                     <CheckCircle size={14} className="ml-auto flex-shrink-0"
                                         style={{ color: '#06d6a0' }} />
@@ -347,7 +366,7 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                         ))}
                     </div>
 
-                    {selectedPledge === '나만의 약속 직접 쓰기' && (
+                    {selectedPledge === CUSTOM_PLEDGE_KEY && (
                         <input type="text" value={customPledge}
                             onChange={e => setCustomPledge(e.target.value)}
                             className="w-full rounded-xl px-4 py-3 text-sm outline-none mb-3"
@@ -356,7 +375,7 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                                 border: '1px solid rgba(6,214,160,0.3)',
                                 color: '#f0f0f5',
                             }}
-                            placeholder="나만의 행동 약속을 적어보세요..." />
+                            placeholder={t('phase4.pledge_custom_placeholder')} />
                     )}
                 </motion.div>
             )}
@@ -372,13 +391,13 @@ export default function Phase4({ persona, playerName, xp }: Props) {
                         boxShadow: '0 0 30px rgba(6,214,160,0.4)',
                     }}>
                     <Sparkles size={22} />
-                    성찰 저널 제출하기 🌱
+                    {t('phase4.submit_journal')} 🌱
                 </motion.button>
             )}
 
             {!allAnswered && (
                 <p className="text-center text-xs mt-4" style={{ color: 'rgba(139,92,246,0.35)' }}>
-                    모든 질문에 5자 이상 답변하면 제출할 수 있습니다
+                    {t('phase4.all_required')}
                 </p>
             )}
         </motion.div>

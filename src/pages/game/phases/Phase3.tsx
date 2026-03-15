@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Info, TrendingUp, Check } from 'lucide-react';
-import { useSessionStore } from '@/store';
+import { useSessionStore, useAuthStore } from '@/store';
+import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import TutorialOverlay from '@/components/ui/TutorialOverlay';
 
 interface Props { persona: string; }
@@ -97,17 +99,19 @@ function SliderRow({ label, value, min, max, color, unit = '%', onChange, hint }
 }
 
 // ─── Pie Chart (CSS conic-gradient) ──────────────────────────
-function PieChart({ shares, fairScore, levelCfg }: {
+function PieChart({ shares, fairScore, levelCfg, fairLevel }: {
     shares: ReturnType<typeof calcShares>;
     fairScore: number;
     levelCfg: { emoji: string; label: string; color: string };
+    fairLevel: FairLevel;
 }) {
+    const { t } = useTranslation();
     const items = [
-        { label: '농장주', pct: shares.farmerGet, color: '#06d6a0' },
-        { label: '공정무역기금', pct: shares.premiumGet, color: '#fb923c' },
-        { label: '협동조합', pct: shares.coopGet, color: '#38bdf8' },
-        { label: '유통업자', pct: shares.distGet, color: '#f5a623' },
-        { label: '소매상', pct: shares.retailGet, color: '#a78bfa' },
+        { label: t('phase3.farmer_margin'), pct: shares.farmerGet, color: '#06d6a0' },
+        { label: t('phase3.premium_margin'), pct: shares.premiumGet, color: '#fb923c' },
+        { label: t('phase3.coop_margin'), pct: shares.coopGet, color: '#38bdf8' },
+        { label: t('phase3.dist_margin'), pct: shares.distGet, color: '#f5a623' },
+        { label: t('phase3.retail_margin'), pct: shares.retailGet, color: '#a78bfa' },
     ];
 
     // Build conic-gradient stops
@@ -126,11 +130,11 @@ function PieChart({ shares, fairScore, levelCfg }: {
                 {/* Inner circle with score */}
                 <div className="absolute inset-4 rounded-full flex flex-col items-center justify-center"
                     style={{ background: 'rgba(15,10,40,0.95)' }}>
-                    <div className="text-xs" style={{ color: 'rgba(196,181,253,0.5)' }}>공정 지수</div>
+                    <div className="text-xs" style={{ color: 'rgba(196,181,253,0.5)' }}>{t('phase3.fair_index')}</div>
                     <div className="text-2xl font-black" style={{ color: fairScore >= 70 ? '#06d6a0' : fairScore >= 40 ? '#f5a623' : '#f43f5e' }}>
                         {fairScore}
                     </div>
-                    <div className="text-xs font-bold" style={{ color: levelCfg.color }}>{levelCfg.emoji} {levelCfg.label}</div>
+                    <div className="text-xs font-bold" style={{ color: levelCfg.color }}>{levelCfg.emoji} {t(`phase3.fair_level_${fairLevel}`)}</div>
                 </div>
             </div>
             {/* Legend */}
@@ -149,7 +153,10 @@ function PieChart({ shares, fairScore, levelCfg }: {
 
 // ─── Phase 3 Main ─────────────────────────────────────────────
 export default function Phase3({ persona }: Props) {
-    const { sessionId, studentId, phase0Choice } = useSessionStore();
+    const { t } = useTranslation();
+    const { phase0Choice } = useSessionStore();
+    const { sessionId } = useParams();
+    const studentId = useAuthStore(s => s.studentProfile?.studentId);
 
     // Phase 0에서 광고를 구매했으면 유통 마진을 높게 설정 → 문제 인식 유도
     // 거부했으면 낮게 → 다른 구조적 원인 탐색 유도
@@ -164,6 +171,7 @@ export default function Phase3({ persona }: Props) {
         retailMargin: 25,
     });
     const [submitted, setSubmitted] = useState(false);
+    const [submitError, setSubmitError] = useState(false);
     const [showSageAnim, setShowSageAnim] = useState(false);
     const [showTutorial, setShowTutorial] = useState(true);
 
@@ -182,12 +190,18 @@ export default function Phase3({ persona }: Props) {
 
     function handleSubmit() {
         setSubmitted(true);
+        setSubmitError(false);
         if (isFair) setTimeout(() => setShowSageAnim(true), 800);
 
         if (sessionId && studentId) {
             const content = `공정지수: ${fairLevel === 'fair' ? '공정' : '불공정'} (${fairScore}점)\n최종 소비자가: ${finalPrice}원\n수익 분배: 농장주 ${shares.farmerGet}%, 협동조합 ${shares.coopGet}%, 유통업자 ${shares.distGet}%, 매장 ${shares.retailGet}%`;
-            import('@/lib/firebaseService').then(({ StudentService }) => {
-                StudentService.submitReport(sessionId, studentId, 3, content, { margins, finalPrice, shares, isFair }).catch(console.error);
+            import('@/lib/mockData').then(({ isFirebaseConfigured }) => {
+                if (!isFirebaseConfigured()) return;
+                import('@/lib/firebaseService').then(({ StudentService }) => {
+                    StudentService.submitReport(sessionId, studentId, 3, content, { margins: margins as unknown as Record<string, unknown>, finalPrice, shares: shares as unknown as Record<string, unknown>, isFair }).catch(() => {
+                        setSubmitError(true);
+                    });
+                });
             });
         }
     }
@@ -221,15 +235,15 @@ export default function Phase3({ persona }: Props) {
             <div className="text-center mb-8">
                 <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 text-xs font-bold uppercase tracking-widest"
                     style={{ background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)', color: '#a78bfa' }}>
-                    <TrendingUp size={12} /> Phase 3 · 공정의 설계
+                    <TrendingUp size={12} /> {t('phase3.title')}
                 </span>
                 <img src={`/personas/${persona.toLowerCase()}.png`} alt={persona}
                     className="w-48 h-48 sm:w-56 sm:h-56 mx-auto mb-3 rounded-full object-cover relative z-10"
                     style={{ border: `4px solid ${PERSONA_COLORS[persona] ?? '#a78bfa'}`, boxShadow: `0 0 30px ${PERSONA_COLORS[persona] ?? '#a78bfa'}60` }}
                     onError={e => { (e.target as HTMLImageElement).src = ''; (e.target as HTMLImageElement).style.display = 'none'; }} />
-                <h2 className="text-3xl font-black text-white mb-2">최적의 공정가를 설계하라</h2>
+                <h2 className="text-3xl font-black text-white mb-2">{t('phase3.header')}</h2>
                 <p style={{ color: 'rgba(196,181,253,0.6)' }}>
-                    슬라이더를 조작하여 모두가 납득할 수 있는 가격 구조를 만드세요
+                    {t('phase3.subtitle')}
                 </p>
                 {phase0Choice !== null && (
                     <div className="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full text-xs"
@@ -246,7 +260,7 @@ export default function Phase3({ persona }: Props) {
             >
                 <div className="flex items-center justify-center gap-6 flex-wrap">
                     <div>
-                        <div className="text-xs font-bold uppercase tracking-wider" style={{ color: 'rgba(196,181,253,0.5)' }}>최종 소비자가</div>
+                        <div className="text-xs font-bold uppercase tracking-wider" style={{ color: 'rgba(196,181,253,0.5)' }}>{t('phase3.final_price')}</div>
                         <motion.div key={finalPrice} initial={{ scale: 1.15 }} animate={{ scale: 1 }}
                             className="text-4xl font-black" style={{ color: levelCfg.color }}>
                             ₩{finalPrice.toLocaleString()}
@@ -255,7 +269,7 @@ export default function Phase3({ persona }: Props) {
                     <motion.span key={fairLevel} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
                         className="px-3 py-1 rounded-full text-xs font-black"
                         style={{ background: `${levelCfg.color}25`, color: levelCfg.color, border: `1px solid ${levelCfg.color}50` }}>
-                        {levelCfg.emoji} {levelCfg.label}
+                        {levelCfg.emoji} {t(`phase3.fair_level_${fairLevel}`)}
                     </motion.span>
                     <div className="text-xs" style={{ color: 'rgba(196,181,253,0.4)' }}>
                         농장주 <strong style={{ color: shares.farmerGet >= 15 ? '#06d6a0' : '#f43f5e' }}>{Math.round(shares.farmerGet)}%</strong>
@@ -270,32 +284,32 @@ export default function Phase3({ persona }: Props) {
                 <div className="lg:col-span-2 rounded-2xl p-6"
                     style={{ background: 'rgba(15,10,40,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(139,92,246,0.2)' }}>
                     <h3 className="font-black text-white mb-5 flex items-center gap-2">
-                        🎛️ 가격 조절 패널
+                        🎛️ {t('phase3.panel_title')}
                     </h3>
 
-                    <SliderRow label="카카오 원가" value={margins.farmCost} min={300} max={5000} unit="원"
+                    <SliderRow label={t('phase3.farm_cost')} value={margins.farmCost} min={300} max={5000} unit="원"
                         color="#06d6a0" onChange={set('farmCost')}
                         hint="농장에서 카카오 1kg 생산에 드는 원가 (실제: 800~3,000원)" />
-                    <SliderRow label="농장주 마진" value={margins.farmerMargin} min={5} max={50}
+                    <SliderRow label={t('phase3.farmer_margin')} value={margins.farmerMargin} min={5} max={50}
                         color="#06d6a0" onChange={set('farmerMargin')}
                         hint="농장주의 수익률 (현실: 3~8%)" />
-                    <SliderRow label="공정무역기금" value={margins.premiumMargin} min={2} max={20}
+                    <SliderRow label={t('phase3.premium_margin')} value={margins.premiumMargin} min={2} max={20}
                         color="#fb923c" onChange={set('premiumMargin')}
                         hint="지역사회 발전(학교, 우물 등)을 위해 쓰이는 소셜 프리미엄 기금" />
-                    <SliderRow label="협동조합 마진" value={margins.coopMargin} min={2} max={30}
+                    <SliderRow label={t('phase3.coop_margin')} value={margins.coopMargin} min={2} max={30}
                         color="#38bdf8" onChange={set('coopMargin')}
                         hint="공정무역 협동조합의 순수 운영비" />
-                    <SliderRow label="유통업자 마진" value={margins.distMargin} min={5} max={60}
+                    <SliderRow label={t('phase3.dist_margin')} value={margins.distMargin} min={5} max={60}
                         color="#f5a623" onChange={set('distMargin')}
                         hint="유통업자 마진 (현실: 35~45%)" />
-                    <SliderRow label="소매상 마진" value={margins.retailMargin} min={10} max={50}
+                    <SliderRow label={t('phase3.retail_margin')} value={margins.retailMargin} min={10} max={50}
                         color="#a78bfa" onChange={set('retailMargin')}
                         hint="슈퍼마켓 등 소매상의 수익률" />
 
                     {/* 실제 데이터 비교 */}
                     <div className="mt-2 rounded-xl p-4 text-xs space-y-2"
                         style={{ background: 'rgba(245,166,35,0.06)', border: '1px solid rgba(245,166,35,0.2)' }}>
-                        <div className="font-bold text-white mb-2">📊 실제 수익 분배 (2023)</div>
+                        <div className="font-bold text-white mb-2">📊 {t('phase3.real_data_title')}</div>
                         {[
                             { who: '🌱 농장주', real: '3~6%', fair: '15%↑', color: '#06d6a0' },
                             { who: '🏭 유통사', real: '35~45%', fair: '25%↓', color: '#f5a623' },
@@ -313,18 +327,18 @@ export default function Phase3({ persona }: Props) {
                 {/* 파이차트 패널 (1/3) */}
                 <div className="lg:col-span-1 rounded-2xl p-6 flex flex-col items-center justify-center"
                     style={{ background: 'rgba(15,10,40,0.85)', backdropFilter: 'blur(12px)', border: '1px solid rgba(139,92,246,0.2)' }}>
-                    <h4 className="text-sm font-bold text-white mb-4">수익 분배율</h4>
-                    <PieChart shares={shares} fairScore={fairScore} levelCfg={levelCfg} />
+                    <h4 className="text-sm font-bold text-white mb-4">{t('phase3.revenue_distribution')}</h4>
+                    <PieChart shares={shares} fairScore={fairScore} levelCfg={levelCfg} fairLevel={fairLevel} />
 
                     {/* 농장주 수입 */}
                     <div className="w-full mt-5 rounded-xl p-3"
                         style={{ background: 'rgba(6,214,160,0.08)', border: '1px solid rgba(6,214,160,0.2)' }}>
-                        <div className="text-xs" style={{ color: 'rgba(6,214,160,0.7)' }}>농장주 실수령액</div>
+                        <div className="text-xs" style={{ color: 'rgba(6,214,160,0.7)' }}>{t('phase3.farmer_income')}</div>
                         <div className="text-xl font-black" style={{ color: '#06d6a0' }}>
                             ₩{Math.round(margins.farmCost * (margins.farmerMargin / 100)).toLocaleString()}
                         </div>
                         <div className="text-xs mt-1" style={{ color: shares.farmerGet >= 15 ? '#06d6a0' : '#f43f5e' }}>
-                            {shares.farmerGet >= 15 ? '✓ 공정 기준 충족' : '✗ 목표 15% 미달'}
+                            {shares.farmerGet >= 15 ? `✓ ${t('phase3.fair_met')}` : `✗ ${t('phase3.fair_unmet')}`}
                         </div>
                     </div>
                 </div>
@@ -343,17 +357,29 @@ export default function Phase3({ persona }: Props) {
                         }}
                     >
                         <Sparkles size={22} />
-                        {isFair ? '🌟 공정가 확정 & 제출!' : '현재 가격으로 제출하기'}
+                        {isFair ? `🌟 ${t('phase3.submit_fair')}` : t('phase3.submit_current')}
                     </motion.button>
                 ) : (
                     <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
                         className="rounded-2xl p-5 text-center"
-                        style={{ background: 'rgba(6,214,160,0.1)', border: '1px solid rgba(6,214,160,0.35)' }}>
-                        <Check size={32} style={{ color: '#06d6a0', margin: '0 auto 8px' }} />
-                        <div className="font-black text-white text-lg mb-1">제출 완료!</div>
-                        <div className="text-xs" style={{ color: 'rgba(6,214,160,0.8)' }}>
-                            교사의 최종 승인을 기다리는 중...
-                        </div>
+                        style={{ background: submitError ? 'rgba(244,63,94,0.08)' : 'rgba(6,214,160,0.1)', border: `1px solid ${submitError ? 'rgba(244,63,94,0.3)' : 'rgba(6,214,160,0.35)'}` }}>
+                        {submitError ? (
+                            <>
+                                <div className="text-4xl mb-2">⚠️</div>
+                                <div className="font-black text-white text-lg mb-1">{t('common.error_submit')}</div>
+                                <div className="text-xs" style={{ color: 'rgba(244,63,94,0.8)' }}>
+                                    {t('common.error_submit_detail')}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <Check size={32} style={{ color: '#06d6a0', margin: '0 auto 8px' }} />
+                                <div className="font-black text-white text-lg mb-1">{t('phase3.submit_done')}</div>
+                                <div className="text-xs" style={{ color: 'rgba(6,214,160,0.8)' }}>
+                                    {t('common.waiting_teacher')}
+                                </div>
+                            </>
+                        )}
                     </motion.div>
                 )}
             </div>

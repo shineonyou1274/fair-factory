@@ -402,7 +402,7 @@ export default function StudentOnboarding() {
     const { setStudentProfile } = useAuthStore();
     const { setGroup } = useSessionStore();
 
-    const state = location.state as { sessionId?: string; playerName?: string } | null;
+    const state = location.state as { sessionId?: string; playerName?: string; studentId?: string; persona?: string } | null;
     const playerName = state?.playerName ?? '플레이어';
 
     const [stage, setStage] = useState<'intro' | 'sorting' | 'reveal' | 'tutorial'>('intro');
@@ -424,6 +424,10 @@ export default function StudentOnboarding() {
     function handleTutorialComplete() {
         if (!assignedPersona) return;
         const profile = createMockStudent(playerName, assignedPersona);
+        // 실제 Firebase studentId가 있으면 사용, 없으면 mock ID 유지
+        if (state?.studentId) {
+            profile.studentId = state.studentId;
+        }
         setStudentProfile(profile);
         setGroup({ ...MOCK_GROUP, personaAssignments: { [profile.studentId]: assignedPersona } });
         navigate(`/game/${state?.sessionId ?? 'mock-session-001'}`);

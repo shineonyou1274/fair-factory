@@ -193,6 +193,7 @@ export default function SessionControl() {
                     xp: Object.values(s.xp ?? {}).reduce((a: number, b: any) => a + b, 0),
                     submitted: s.reportSubmitted,
                     goldenSeal: (s as any).goldenSeal ?? false,
+                    submissions: (s as any).submissions ?? {},
                 })));
             });
         });
