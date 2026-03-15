@@ -2,12 +2,14 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Info, TrendingUp, Check } from 'lucide-react';
 import { useSessionStore } from '@/store';
+import TutorialOverlay from '@/components/ui/TutorialOverlay';
 
 interface Props { persona: string; }
 
 interface Margins {
     farmCost: number;
     farmerMargin: number;
+    premiumMargin: number; // 공정무역기금 (소셜 프리미엄)
     coopMargin: number;
     distMargin: number;
     retailMargin: number;
@@ -30,24 +32,26 @@ function getFairLevel(price: number, farmerShare: number): FairLevel {
 }
 
 const FAIR_LEVEL_CONFIG: Record<FairLevel, { emoji: string; label: string; color: string; bg: string; border: string }> = {
-    fair:    { emoji: '🟢', label: '공정 가격',  color: '#06d6a0', bg: 'rgba(6,214,160,0.1)',   border: 'rgba(6,214,160,0.4)' },
-    partial: { emoji: '🟡', label: '개선 필요',  color: '#f5a623', bg: 'rgba(245,166,35,0.1)',  border: 'rgba(245,166,35,0.4)' },
-    unfair:  { emoji: '🔴', label: '불공정',     color: '#f43f5e', bg: 'rgba(244,63,94,0.08)',  border: 'rgba(244,63,94,0.3)' },
+    fair: { emoji: '🟢', label: '공정 가격', color: '#06d6a0', bg: 'rgba(6,214,160,0.1)', border: 'rgba(6,214,160,0.4)' },
+    partial: { emoji: '🟡', label: '개선 필요', color: '#f5a623', bg: 'rgba(245,166,35,0.1)', border: 'rgba(245,166,35,0.4)' },
+    unfair: { emoji: '🔴', label: '불공정', color: '#f43f5e', bg: 'rgba(244,63,94,0.08)', border: 'rgba(244,63,94,0.3)' },
 };
 
 function calcPrice(m: Margins) {
     const base = m.farmCost * (1 + m.farmerMargin / 100);
-    const afterCoop = base * (1 + m.coopMargin / 100);
+    const afterPremium = base * (1 + m.premiumMargin / 100);
+    const afterCoop = afterPremium * (1 + m.coopMargin / 100);
     const afterDist = afterCoop * (1 + m.distMargin / 100);
     return Math.round(afterDist * (1 + m.retailMargin / 100));
 }
 
 function calcShares(m: Margins, finalPrice: number) {
     const farmerGet = m.farmCost * (m.farmerMargin / 100) / finalPrice * 100;
-    const coopGet = m.farmCost * (1 + m.farmerMargin / 100) * (m.coopMargin / 100) / finalPrice * 100;
-    const distGet = m.farmCost * (1 + m.farmerMargin / 100) * (1 + m.coopMargin / 100) * (m.distMargin / 100) / finalPrice * 100;
-    const retailGet = 100 - farmerGet - coopGet - distGet;
-    return { farmerGet, coopGet, distGet, retailGet };
+    const premiumGet = m.farmCost * (1 + m.farmerMargin / 100) * (m.premiumMargin / 100) / finalPrice * 100;
+    const coopGet = m.farmCost * (1 + m.farmerMargin / 100) * (1 + m.premiumMargin / 100) * (m.coopMargin / 100) / finalPrice * 100;
+    const distGet = m.farmCost * (1 + m.farmerMargin / 100) * (1 + m.premiumMargin / 100) * (1 + m.coopMargin / 100) * (m.distMargin / 100) / finalPrice * 100;
+    const retailGet = 100 - farmerGet - premiumGet - coopGet - distGet;
+    return { farmerGet, premiumGet, coopGet, distGet, retailGet };
 }
 
 // ─── Slider ───────────────────────────────────────────────────
@@ -100,6 +104,7 @@ function PieChart({ shares, fairScore, levelCfg }: {
 }) {
     const items = [
         { label: '농장주', pct: shares.farmerGet, color: '#06d6a0' },
+        { label: '공정무역기금', pct: shares.premiumGet, color: '#fb923c' },
         { label: '협동조합', pct: shares.coopGet, color: '#38bdf8' },
         { label: '유통업자', pct: shares.distGet, color: '#f5a623' },
         { label: '소매상', pct: shares.retailGet, color: '#a78bfa' },
@@ -153,12 +158,14 @@ export default function Phase3({ persona }: Props) {
     const [margins, setMargins] = useState<Margins>({
         farmCost: 600,
         farmerMargin: 10,
+        premiumMargin: 2, // 기본값은 매우 낮게 설정
         coopMargin: 8,
         distMargin: initialDistMargin,
         retailMargin: 25,
     });
     const [submitted, setSubmitted] = useState(false);
     const [showSageAnim, setShowSageAnim] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(true);
 
     const finalPrice = calcPrice(margins);
     const shares = calcShares(margins, finalPrice);
@@ -181,6 +188,21 @@ export default function Phase3({ persona }: Props) {
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="min-h-screen px-4 py-8 pb-40 max-w-4xl mx-auto relative z-10 overflow-x-hidden overflow-y-auto">
+            {showTutorial && (
+                <TutorialOverlay
+                    title="공정의 설계"
+                    icon="✨"
+                    description={
+                        <div className="space-y-2 text-left">
+                            <p>뛰어난 협상력이었다! 하지만 본질적인 구조를 바꾸지 않으면 마몬은 다시 부활한다.</p>
+                            <p className="text-purple-300 font-bold">👉 슬라이더를 움직여 각 주체들의 마진(수익률)을 조절하라.</p>
+                            <p>농장주의 수입이 <span className="text-green-400 font-bold">최저가(2,800원) 이상, 점유율 15% 이상</span>이 되는 '공정 가격'을 만들어 제출하라!</p>
+                        </div>
+                    }
+                    onClose={() => setShowTutorial(false)}
+                />
+            )}
+
             {/* Phase 3 배경 */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <img src="/phases/phase3-bg.png" alt="" className="w-full h-full object-cover"
@@ -195,8 +217,8 @@ export default function Phase3({ persona }: Props) {
                     <TrendingUp size={12} /> Phase 3 · 공정의 설계
                 </span>
                 <img src={`/personas/${persona.toLowerCase()}.png`} alt={persona}
-                    className="w-20 h-20 mx-auto mb-3 rounded-full object-cover relative z-10"
-                    style={{ border: `3px solid ${PERSONA_COLORS[persona] ?? '#a78bfa'}`, boxShadow: `0 0 20px ${PERSONA_COLORS[persona] ?? '#a78bfa'}40` }}
+                    className="w-48 h-48 sm:w-56 sm:h-56 mx-auto mb-3 rounded-full object-cover relative z-10"
+                    style={{ border: `4px solid ${PERSONA_COLORS[persona] ?? '#a78bfa'}`, boxShadow: `0 0 30px ${PERSONA_COLORS[persona] ?? '#a78bfa'}60` }}
                     onError={e => { (e.target as HTMLImageElement).src = ''; (e.target as HTMLImageElement).style.display = 'none'; }} />
                 <h2 className="text-3xl font-black text-white mb-2">최적의 공정가를 설계하라</h2>
                 <p style={{ color: 'rgba(196,181,253,0.6)' }}>
@@ -250,9 +272,12 @@ export default function Phase3({ persona }: Props) {
                     <SliderRow label="농장주 마진" value={margins.farmerMargin} min={5} max={50}
                         color="#06d6a0" onChange={set('farmerMargin')}
                         hint="농장주의 수익률 (현실: 3~8%)" />
+                    <SliderRow label="공정무역기금" value={margins.premiumMargin} min={2} max={20}
+                        color="#fb923c" onChange={set('premiumMargin')}
+                        hint="지역사회 발전(학교, 우물 등)을 위해 쓰이는 소셜 프리미엄 기금" />
                     <SliderRow label="협동조합 마진" value={margins.coopMargin} min={2} max={30}
                         color="#38bdf8" onChange={set('coopMargin')}
-                        hint="공정무역 협동조합의 운영비 및 공동 기금" />
+                        hint="공정무역 협동조합의 순수 운영비" />
                     <SliderRow label="유통업자 마진" value={margins.distMargin} min={5} max={60}
                         color="#f5a623" onChange={set('distMargin')}
                         hint="유통업자 마진 (현실: 35~45%)" />

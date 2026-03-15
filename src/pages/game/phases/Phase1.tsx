@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, CheckCircle, Send, FileText } from 'lucide-react';
+import TutorialOverlay from '@/components/ui/TutorialOverlay';
 
 interface Props { persona: string; onPhaseComplete: () => void; sessionId?: string; studentId?: string; }
 
@@ -148,6 +149,7 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
     const [activeTruth, setActiveTruth] = useState<typeof HIDDEN_TRUTHS[0] | null>(null);
     const [submitted, setSubmitted] = useState(false);
     const [submitError, setSubmitError] = useState(false);
+    const [showTutorial, setShowTutorial] = useState(true);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const [canvasSize, setCanvasSize] = useState({ w: BASE_W, h: BASE_H });
@@ -197,6 +199,21 @@ export default function Phase1({ onPhaseComplete, sessionId, studentId }: Props)
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="min-h-screen px-4 py-8 pb-32 max-w-3xl mx-auto relative z-10">
+            {showTutorial && (
+                <TutorialOverlay
+                    title="진실을 파헤쳐라"
+                    icon="🕵️"
+                    description={
+                        <div className="space-y-2 text-left">
+                            <p>요원, 마몬은 달콤한 초콜릿 뒤에 끔찍한 진실을 감추어 두었다.</p>
+                            <p className="text-purple-300 font-bold">👉 화면의 어두운 부분을 손가락이나 마우스로 문질러 보라.</p>
+                            <p>숨겨진 <span className="text-yellow-400 font-bold">5가지 진실</span>을 모두 찾아내어 보고서를 제출해야 한다!</p>
+                        </div>
+                    }
+                    onClose={() => setShowTutorial(false)}
+                />
+            )}
+
             {/* Phase 1 배경 */}
             <div className="fixed inset-0 z-0 pointer-events-none">
                 <img src="/phases/phase1-bg.png" alt="" className="w-full h-full object-cover"

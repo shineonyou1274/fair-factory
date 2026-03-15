@@ -63,6 +63,7 @@ export default function Phase4({ persona, playerName, xp }: Props) {
     const [selectedPledge, setSelectedPledge] = useState<string | null>(null);
     const [customPledge, setCustomPledge] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [showEnding, setShowEnding] = useState(false);
 
     const q = REFLECTION_QUESTIONS[currentQ];
     const answeredCount = Object.values(answers).filter(v => v.trim().length >= 5).length;
@@ -72,7 +73,61 @@ export default function Phase4({ persona, playerName, xp }: Props) {
         : selectedPledge;
 
     function handleSubmit() {
-        setSubmitted(true);
+        setShowEnding(true);
+        // 몇 초 뒤에 진짜 제출 화면으로 넘어갈 수도 있지만, 엔딩 튜토리얼을 닫으면 submitted 화면을 보여주도록 함
+    }
+
+    if (showEnding) {
+        return (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-hidden"
+                style={{ background: 'rgba(10,6,24,0.95)', backdropFilter: 'blur(15px)' }}>
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+                        className="w-[800px] h-[800px] rounded-full"
+                        style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.15) 0%, transparent 70%)' }} />
+                </div>
+
+                <div className="text-center max-w-2xl relative z-10">
+                    <motion.div initial={{ y: -30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }}
+                        className="text-6xl mb-6">✨</motion.div>
+                    <motion.h2 initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }}
+                        className="text-3xl sm:text-5xl font-black text-white mb-6 leading-tight">
+                        <span style={{ color: '#fbbf24' }}>모든 미션 완수!</span><br />
+                        침묵의 성곽이 무너졌습니다
+                    </motion.h2>
+                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+                        className="text-base sm:text-lg mb-10 leading-relaxed" style={{ color: 'rgba(196,181,253,0.9)' }}>
+                        당신이 작성한 진심 어린 성찰이 마몬의 마법을 깼습니다.<br />
+                        마침내 <strong style={{ color: '#fbbf24' }}>5명의 현자</strong>들이 황금 안대를 벗고 온전한 지혜의 눈을 되찾았습니다!
+                    </motion.p>
+
+                    {/* 현자 5명 보여주기 */}
+                    <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 1.5, staggerChildren: 0.2 }}
+                        className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 mb-12">
+                        {['진실의 현자', '정의의 현자', '지혜의 현자', '연대의 현자', '용기의 현자'].map((name, i) => (
+                            <motion.div key={name} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 1.5 + i * 0.1 }}
+                                className="flex flex-col items-center gap-2">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden"
+                                    style={{ border: '2px solid rgba(251,191,36,0.6)', boxShadow: '0 0 20px rgba(251,191,36,0.3)' }}>
+                                    <img src={`/sages/sage${i + 1}.png`} alt={name} className="w-full h-full object-cover"
+                                        // 안대가 벗겨진 밝은 모습
+                                        style={{ filter: 'brightness(1.1) saturate(1.2)' }} />
+                                </div>
+                                <span className="text-xs font-bold" style={{ color: '#fbbf24' }}>{name}</span>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+
+                    <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }}
+                        onClick={() => { setShowEnding(false); setSubmitted(true); }}
+                        className="px-8 py-4 rounded-xl font-bold text-white transition-all hover:scale-105 mx-auto block"
+                        style={{ background: 'linear-gradient(135deg, #fbbf24, #d97706)', boxShadow: '0 0 30px rgba(251,191,36,0.4)' }}>
+                        여정 마무리하기 →
+                    </motion.button>
+                </div>
+            </motion.div>
+        );
     }
 
     // ── 제출 완료 화면 ──

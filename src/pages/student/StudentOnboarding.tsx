@@ -38,6 +38,8 @@ function SortingAnimation({ onComplete }: { onComplete: (p: Persona) => void }) 
     const picked = PERSONAS[Math.floor(Math.random() * PERSONAS.length)];
 
     useEffect(() => {
+        // BGM 볼륨 축소 (크리스탈 효과음 강조)
+        audioManager.duckBGM(0.05, 500);
         // 수정구슬 사운드
         audioManager.playSFX('crystal');
 
@@ -64,6 +66,7 @@ function SortingAnimation({ onComplete }: { onComplete: (p: Persona) => void }) 
             clearInterval(msgInterval);
             setFinalIdx(PERSONAS.findIndex(p => p.id === picked.id));
             setRevealed(true);
+            audioManager.restoreBGM(1000); // 볼륨 원복
             setTimeout(() => onComplete(picked.id), 1600);
         }, 4500);
 

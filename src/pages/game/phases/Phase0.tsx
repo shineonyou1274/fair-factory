@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, AlertCircle } from 'lucide-react';
 import { useSessionStore } from '@/store';
+import TutorialOverlay from '@/components/ui/TutorialOverlay';
 
 interface Props {
     persona: string;
@@ -99,6 +100,7 @@ function FakeAd({ onChoice }: { onChoice: (bought: boolean) => void }) {
 export default function Phase0({ persona, onPhaseComplete }: Props) {
     const [stage, setStage] = useState<'intro' | 'ad' | 'reaction'>('intro');
     const [bought, setBought] = useState<boolean | null>(null);
+    const [showTutorial, setShowTutorial] = useState(true);
     const setPhase0Choice = useSessionStore(s => s.setPhase0Choice);
 
     function handleChoice(didBuy: boolean) {
@@ -114,6 +116,21 @@ export default function Phase0({ persona, onPhaseComplete }: Props) {
             exit={{ opacity: 0 }}
             className="min-h-screen flex flex-col items-center justify-center px-4 py-8 relative overflow-hidden"
         >
+            {showTutorial && (
+                <TutorialOverlay
+                    title="페르소나 역할극 시작"
+                    icon="🎭"
+                    description={
+                        <div className="space-y-2 text-left">
+                            <p>환영한다, 공정가. 당신은 이제부터 <strong className="text-yellow-400">'{persona}'</strong>의 역할을 맡게 된다.</p>
+                            <p>잠시 후, 당신을 시험하기 위한 <span className="text-red-400 font-bold">마몬의 환상 광고</span>가 나타난다.</p>
+                            <p className="text-purple-300 font-bold">👉 광고를 보고 본능적으로 '살지', '말지' 선택하라!</p>
+                        </div>
+                    }
+                    onClose={() => setShowTutorial(false)}
+                />
+            )}
+
             {/* Phase 0 배경 */}
             <div className="absolute inset-0 z-0">
                 <img src="/phases/phase0-bg.png" alt="" className="w-full h-full object-cover"

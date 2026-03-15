@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Zap, CheckCircle, Lock, Timer, ChevronDown, ChevronUp } from 'lucide-react';
 import type { NpcCharacter } from '@/types';
+import TutorialOverlay from '@/components/ui/TutorialOverlay';
 
 const MAX_ROUNDS = 5;      // NPC당 최대 발언 횟수
-const TIMER_SECONDS = 60;  // NPC당 대화 제한 시간(초)
+const TIMER_SECONDS = 180;  // NPC당 대화 제한 시간(초) - 변경: 사용자가 여유롭게 읽고 쓰도록 180초로 연장
 
 interface Props { persona: string; npcs: NpcCharacter[]; }
 
@@ -156,9 +157,9 @@ function generateNpcResponse(npc: NpcCharacter, userMsg: string, persona: string
     if (npc.id === 'kim' && (hasEmpathy || persona === 'Lambda')) effectiveStage = stage === 'early' ? 'mid' : 'late';
 
     const pool = npcResponses[effectiveStage];
-    // 같은 단계 내에서 이전과 다른 응답 선택
-    const lastNpcMsg = [...history].reverse().find(m => m.role === 'npc')?.text;
-    const filtered = pool.filter(r => r !== lastNpcMsg);
+    // 이전에 했던 말은 최대한 피하도록 필터링
+    const previousNpca = history.filter(m => m.role === 'npc').map(m => m.text);
+    const filtered = pool.filter(r => !previousNpca.includes(r));
     return (filtered.length > 0 ? filtered : pool)[Math.floor(Math.random() * (filtered.length || pool.length))];
 }
 
@@ -209,13 +210,13 @@ function NpcSelector({ npcs, selected, onSelect }: { npcs: NpcCharacter[]; selec
                         }}>
                         <div className="relative">
                             <img src={NPC_IMG[npc.id]} alt={npc.name}
-                                className="w-10 h-10 rounded-full object-cover relative z-10"
+                                className="w-16 h-16 rounded-full object-cover relative z-10"
                                 onError={e => {
                                     (e.target as HTMLImageElement).style.display = 'none';
                                     (e.target as HTMLImageElement).nextElementSibling?.removeAttribute('hidden');
                                 }}
                             />
-                            <div hidden className="w-10 h-10 rounded-full flex items-center justify-center text-xl absolute inset-0"
+                            <div hidden className="w-16 h-16 rounded-full flex items-center justify-center text-2xl absolute inset-0"
                                 style={{ background: 'rgba(255,255,255,0.05)' }}>
                                 {npc.emoji}
                             </div>
@@ -241,11 +242,11 @@ function NpcSelector({ npcs, selected, onSelect }: { npcs: NpcCharacter[]; selec
 // ─── Phase 2 Main ─────────────────────────────────────────────
 export default function Phase2({ persona, npcs: initNpcs }: Props) {
     const defaultNpcs: NpcCharacter[] = [
-        { id: 'gorex',   name: '고렉스', role: '대형 유통업자',     emoji: '😈', hiddenAgenda: '', weakness: '', trustLevel: 20, isPersuaded: false },
-        { id: 'tierra',  name: '티에라', role: '소규모 농장주',     emoji: '😔', hiddenAgenda: '', weakness: '', trustLevel: 40, isPersuaded: false },
-        { id: 'maxwell', name: '맥스웰', role: '다국적 기업 임원',  emoji: '🏢', hiddenAgenda: '', weakness: '', trustLevel: 15, isPersuaded: false },
-        { id: 'amara',   name: '아마라', role: '현지 협동조합장',   emoji: '🌱', hiddenAgenda: '', weakness: '', trustLevel: 65, isPersuaded: false },
-        { id: 'kim',     name: '김현주', role: '소비자 대표',       emoji: '🛒', hiddenAgenda: '', weakness: '', trustLevel: 35, isPersuaded: false },
+        { id: 'gorex', name: '고렉스', role: '대형 유통업자', emoji: '😈', hiddenAgenda: '', weakness: '', trustLevel: 20, isPersuaded: false },
+        { id: 'tierra', name: '티에라', role: '소규모 농장주', emoji: '😔', hiddenAgenda: '', weakness: '', trustLevel: 40, isPersuaded: false },
+        { id: 'maxwell', name: '맥스웰', role: '다국적 기업 임원', emoji: '🏢', hiddenAgenda: '', weakness: '', trustLevel: 15, isPersuaded: false },
+        { id: 'amara', name: '아마라', role: '현지 협동조합장', emoji: '🌱', hiddenAgenda: '', weakness: '', trustLevel: 65, isPersuaded: false },
+        { id: 'kim', name: '김현주', role: '소비자 대표', emoji: '🛒', hiddenAgenda: '', weakness: '', trustLevel: 35, isPersuaded: false },
     ];
     const [npcs, setNpcs] = useState<NpcCharacter[]>(initNpcs.length ? initNpcs : defaultNpcs);
     const [selectedNpc, setSelectedNpc] = useState<string>(npcs[0]?.id ?? 'gorex');
@@ -262,7 +263,8 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
-    const [profileOpen, setProfileOpen] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(true);
+    const [showTutorial, setShowTutorial] = useState(true);
     const npc = npcs.find(n => n.id === selectedNpc)!;
     const chatHistory = messages[selectedNpc] ?? [];
     const action = ACTION_CARDS[persona];
@@ -293,7 +295,8 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     useEffect(() => {
         setTimer(TIMER_SECONDS);
         if (timerRef.current) clearInterval(timerRef.current);
-        if (isExhausted || npc?.isPersuaded) return;
+        // User starts chatting -> timer starts ticking. (chatHistory.length > 1 means user sent at least 1 message)
+        if (isExhausted || npc?.isPersuaded || chatHistory.length <= 1) return;
 
         timerRef.current = setInterval(() => {
             setTimer(prev => {
@@ -307,7 +310,7 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
         }, 1000);
 
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }, [selectedNpc]);
+    }, [selectedNpc, isExhausted, npc?.isPersuaded, chatHistory.length, handleTimerExpired]);
 
     // Init NPC greeting
     useEffect(() => {
@@ -346,19 +349,18 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
 
         let response: string;
         try {
-            // Claude API 프록시 호출
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    npcId: selectedNpc,
-                    userMessage: text,
-                    persona,
-                    chatHistory: currentHistory.slice(-6).map((m: any) => ({ role: m.role === 'user' ? 'user' : 'assistant', text: m.text })),
-                }),
-            });
-            const data = await res.json();
-            response = data.text ?? generateNpcResponse(npc, text, persona, currentHistory);
+            let apiResponse = null;
+            if (import.meta.env.VITE_GEMINI_API_KEY) {
+                try {
+                    // Call the local utility function we will create instead of a 'fetch' to an non-existent api route
+                    const { generateGeminiResponse } = await import('../../../lib/geminiApi');
+                    apiResponse = await generateGeminiResponse(selectedNpc, text, persona, currentHistory);
+                } catch (err) {
+                    console.error("Gemini fallback triggered due to error:", err);
+                }
+            }
+
+            response = apiResponse || generateNpcResponse(npc, text, persona, currentHistory);
         } catch {
             // 네트워크 오류 시 로컬 폴백
             await new Promise(r => setTimeout(r, 800 + Math.random() * 500));
@@ -381,211 +383,230 @@ export default function Phase2({ persona, npcs: initNpcs }: Props) {
     }
 
     return (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="h-[calc(100dvh-56px)] flex flex-col max-w-3xl mx-auto px-4 pt-2 pb-3 relative z-10 overflow-x-hidden">
-            {/* Phase 2 배경 */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
+        <>
+            {/* Phase 2 배경 (최하단) */}
+            <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 0 }}>
                 <img src="/phases/phase2-bg.png" alt="" className="w-full h-full object-cover"
                     style={{ filter: 'brightness(0.18) saturate(1.2)' }} />
                 <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(6,214,160,0.08), rgba(10,6,24,0.85))' }} />
             </div>
 
-            {/* Header */}
-            <div className="text-center mb-2 flex-shrink-0">
-                <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
-                    style={{ background: 'rgba(6,214,160,0.15)', border: '1px solid rgba(6,214,160,0.3)', color: '#06d6a0' }}>
-                    Phase 2 · 지혜의 토론
-                </span>
-                <div className="mt-3 flex items-center justify-center gap-2 text-sm">
-                    <span style={{ color: 'rgba(196,181,253,0.6)' }}>설득 현황:</span>
-                    <strong style={{ color: '#fbbf24' }}>{persuadeCount}/5</strong>
-                    <span style={{ color: 'rgba(196,181,253,0.4)' }}>— 3명 이상 설득 시 Phase 3 진입</span>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="flex flex-col h-full min-h-[calc(100dvh-56px)] max-w-3xl mx-auto px-4 pt-2 pb-3 relative z-10">
+
+                {showTutorial && (
+                    <TutorialOverlay
+                        title="지혜의 토론"
+                        icon="⚖️"
+                        description={
+                            <div className="space-y-2 text-left">
+                                <p>첫 번째 현자를 구출했다! 이제 진실을 알릴 차례다.</p>
+                                <p>이곳에는 카카오 산업을 움직이는 <strong>5명의 인물(NPC)</strong>이 있다.</p>
+                                <p className="text-purple-300 font-bold">👉 NPC 프로필의 '힌트'를 참고해 메시지를 보내라.</p>
+                                <p>시간 내에 <span className="text-green-400 font-bold">3명 이상을 설득</span>하면 다음 단계로 갈 수 있다!</p>
+                            </div>
+                        }
+                        onClose={() => setShowTutorial(false)}
+                    />
+                )}
+
+                {/* Header */}
+                <div className="text-center mb-2 flex-shrink-0 relative z-10">
+                    <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest"
+                        style={{ background: 'rgba(6,214,160,0.15)', border: '1px solid rgba(6,214,160,0.3)', color: '#06d6a0' }}>
+                        Phase 2 · 지혜의 토론
+                    </span>
+                    <div className="mt-3 flex items-center justify-center gap-2 text-sm">
+                        <span style={{ color: 'rgba(196,181,253,0.6)' }}>설득 현황:</span>
+                        <strong style={{ color: '#fbbf24' }}>{persuadeCount}/5</strong>
+                        <span style={{ color: 'rgba(196,181,253,0.4)' }}>— 3명 이상 설득 시 Phase 3 진입</span>
+                    </div>
                 </div>
-            </div>
 
-            {/* NPC Selector */}
-            <div className="mb-2 flex-shrink-0">
-                <NpcSelector npcs={npcs} selected={selectedNpc} onSelect={setSelectedNpc} />
-            </div>
+                {/* NPC Selector */}
+                <div className="mb-2 flex-shrink-0 relative z-10">
+                    <NpcSelector npcs={npcs} selected={selectedNpc} onSelect={setSelectedNpc} />
+                </div>
 
-            {/* NPC 프로필 카드 */}
-            {npc && profile && (
-                <div className="mb-2 rounded-xl overflow-hidden text-xs flex-shrink-0"
-                    style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
-                    {/* 헤더: 이름 + 상태 + 접기 버튼 */}
-                    <button className="w-full px-4 py-3 flex items-center gap-3 text-left"
-                        onClick={() => setProfileOpen(p => !p)}>
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-base">{npc.emoji}</span>
-                            <div>
-                                <span className="font-bold text-white text-sm">{npc.name}</span>
-                                <span className="ml-2" style={{ color: 'rgba(167,139,250,0.6)' }}>{profile.title}</span>
+                {/* NPC 프로필 카드 */}
+                {npc && profile && (
+                    <div className="mb-2 rounded-xl overflow-hidden text-xs flex-shrink-0"
+                        style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
+                        {/* 헤더: 이름 + 상태 + 접기 버튼 */}
+                        <button className="w-full px-4 py-3 flex items-center gap-3 text-left"
+                            onClick={() => setProfileOpen(p => !p)}>
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className="text-base">{npc.emoji}</span>
+                                <div>
+                                    <span className="font-bold text-white text-sm">{npc.name}</span>
+                                    <span className="ml-2" style={{ color: 'rgba(167,139,250,0.6)' }}>{profile.title}</span>
+                                </div>
                             </div>
-                        </div>
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                            {!npc.isPersuaded && !isExhausted && (
-                                <div className="flex items-center gap-1 font-mono"
-                                    style={{ color: timer <= 10 ? '#f43f5e' : 'rgba(196,181,253,0.5)' }}>
-                                    <Timer size={11} />
-                                    {String(timer).padStart(2, '0')}s
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                                {!npc.isPersuaded && !isExhausted && (
+                                    <div className="flex items-center gap-1 font-mono"
+                                        style={{ color: timer <= 10 ? '#f43f5e' : 'rgba(196,181,253,0.5)' }}>
+                                        <Timer size={11} />
+                                        {chatHistory.length <= 1 ? '대기 중' : `${String(timer).padStart(2, '0')}s`}
+                                    </div>
+                                )}
+                                {!npc.isPersuaded && (
+                                    <div style={{ color: roundsLeft <= 1 ? '#f43f5e' : 'rgba(196,181,253,0.4)' }}>
+                                        {roundsLeft}/{MAX_ROUNDS}
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                                        <div className="h-full rounded-full transition-all duration-500"
+                                            style={{ width: `${npc.trustLevel}%`, background: npc.isPersuaded ? '#06d6a0' : npc.trustLevel >= 60 ? '#fbbf24' : '#f97316' }} />
+                                    </div>
+                                    <span style={{ color: npc.isPersuaded ? '#06d6a0' : '#fbbf24' }}>
+                                        {npc.isPersuaded ? '✅' : `${npc.trustLevel}%`}
+                                    </span>
                                 </div>
-                            )}
-                            {!npc.isPersuaded && (
-                                <div style={{ color: roundsLeft <= 1 ? '#f43f5e' : 'rgba(196,181,253,0.4)' }}>
-                                    {roundsLeft}/{MAX_ROUNDS}
-                                </div>
-                            )}
-                            <div className="flex items-center gap-1.5">
-                                <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
-                                    <div className="h-full rounded-full transition-all duration-500"
-                                        style={{ width: `${npc.trustLevel}%`, background: npc.isPersuaded ? '#06d6a0' : npc.trustLevel >= 60 ? '#fbbf24' : '#f97316' }} />
-                                </div>
-                                <span style={{ color: npc.isPersuaded ? '#06d6a0' : '#fbbf24' }}>
-                                    {npc.isPersuaded ? '✅' : `${npc.trustLevel}%`}
-                                </span>
+                                {profileOpen ? <ChevronUp size={14} style={{ color: 'rgba(167,139,250,0.5)' }} /> : <ChevronDown size={14} style={{ color: 'rgba(167,139,250,0.5)' }} />}
                             </div>
-                            {profileOpen ? <ChevronUp size={14} style={{ color: 'rgba(167,139,250,0.5)' }} /> : <ChevronDown size={14} style={{ color: 'rgba(167,139,250,0.5)' }} />}
-                        </div>
-                    </button>
+                        </button>
 
-                    {/* 펼쳐지는 프로필 상세 */}
-                    <AnimatePresence>
-                        {profileOpen && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="overflow-hidden"
-                            >
-                                <div className="px-4 pb-3 space-y-2" style={{ borderTop: '1px solid rgba(124,58,237,0.15)' }}>
-                                    <div className="pt-2" style={{ color: 'rgba(226,232,240,0.8)' }}>
-                                        <p>{profile.bg}</p>
-                                        <p className="mt-1" style={{ color: 'rgba(196,181,253,0.6)' }}>{profile.desc}</p>
-                                    </div>
-                                    <div className="flex items-start gap-2 rounded-lg px-3 py-2"
-                                        style={{ background: 'rgba(124,58,237,0.1)' }}>
-                                        <span style={{ color: 'rgba(167,139,250,0.8)' }}>성격:</span>
-                                        <span style={{ color: 'rgba(226,232,240,0.7)' }}>{profile.personality}</span>
-                                    </div>
-                                    <div className="rounded-lg px-3 py-2"
-                                        style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.15)' }}>
-                                        <span style={{ color: '#fbbf24' }}>{profile.hint}</span>
-                                    </div>
-                                                    {/* 신뢰도 설명 — 첫 대화 시에만 표시 */}
-                                    {chatHistory.length <= 1 && (
-                                        <div className="rounded-lg px-3 py-2 flex items-start gap-2"
-                                            style={{ background: 'rgba(6,214,160,0.06)', border: '1px solid rgba(6,214,160,0.15)' }}>
-                                            <span style={{ color: '#06d6a0', flexShrink: 0 }}>ℹ️</span>
-                                            <span style={{ color: 'rgba(6,214,160,0.8)' }}>
-                                                <strong>신뢰도</strong>란 NPC가 당신의 말을 얼마나 신뢰하는지를 나타냅니다.
-                                                대화를 통해 신뢰도를 80% 이상으로 올리면 설득 성공! 공감, 데이터, 대안 제시 등 다양한 전략을 시도해보세요.
+                        {/* 펼쳐지는 프로필 상세 */}
+                        <AnimatePresence>
+                            {profileOpen && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                >
+                                    <div className="px-4 pb-3 space-y-2" style={{ borderTop: '1px solid rgba(124,58,237,0.15)' }}>
+                                        <div className="pt-2" style={{ color: 'rgba(226,232,240,0.8)' }}>
+                                            <p>{profile.bg}</p>
+                                            <p className="mt-1" style={{ color: 'rgba(196,181,253,0.6)' }}>{profile.desc}</p>
+                                        </div>
+                                        <div className="flex items-start gap-2 rounded-lg px-3 py-2"
+                                            style={{ background: 'rgba(124,58,237,0.1)' }}>
+                                            <span style={{ color: 'rgba(167,139,250,0.8)' }}>성격:</span>
+                                            <span style={{ color: 'rgba(226,232,240,0.7)' }}>{profile.personality}</span>
+                                        </div>
+                                        <div className="rounded-lg px-3 py-2"
+                                            style={{ background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.15)' }}>
+                                            <span style={{ color: '#fbbf24' }}>{profile.hint}</span>
+                                        </div>
+                                        {/* 신뢰도 설명 — 첫 대화 시에만 표시 */}
+                                        {chatHistory.length <= 1 && (
+                                            <div className="rounded-lg px-3 py-2 flex items-start gap-2"
+                                                style={{ background: 'rgba(6,214,160,0.06)', border: '1px solid rgba(6,214,160,0.15)' }}>
+                                                <span style={{ color: '#06d6a0', flexShrink: 0 }}>ℹ️</span>
+                                                <span style={{ color: 'rgba(6,214,160,0.8)' }}>
+                                                    <strong>신뢰도</strong>란 NPC가 당신의 말을 얼마나 신뢰하는지를 나타냅니다.
+                                                    대화를 통해 신뢰도를 80% 이상으로 올리면 설득 성공! 공감, 데이터, 대안 제시 등 다양한 전략을 시도해보세요.
+                                                </span>
+                                            </div>
+                                        )}
+                                        {/* NPC별 미션 안내 */}
+                                        <div className="rounded-lg px-3 py-2"
+                                            style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
+                                            <span className="font-bold" style={{ color: '#a78bfa' }}>🎯 미션: </span>
+                                            <span style={{ color: 'rgba(226,232,240,0.8)' }}>
+                                                {selectedNpc === 'gorex' && '마진 40%의 부당함을 데이터로 논파하여 유통 구조 개선을 약속받으세요.'}
+                                                {selectedNpc === 'tierra' && '공감으로 마음을 열고, 공정무역 인증과 협동조합 참여를 권유하세요.'}
+                                                {selectedNpc === 'maxwell' && 'CSR 보고서와 실제 행동의 모순을 지적하여 공정무역 파일럿 도입을 이끌어내세요.'}
+                                                {selectedNpc === 'amara' && '인증 비용 지원 등 구체적 방안을 제시하여 협동조합 확대를 도우세요.'}
+                                                {selectedNpc === 'kim' && '가격 차이가 하루 200원이라는 점을 알려 공정무역 소비 참여를 이끌어내세요.'}
                                             </span>
                                         </div>
-                                    )}
-                                    {/* NPC별 미션 안내 */}
-                                    <div className="rounded-lg px-3 py-2"
-                                        style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.2)' }}>
-                                        <span className="font-bold" style={{ color: '#a78bfa' }}>🎯 미션: </span>
-                                        <span style={{ color: 'rgba(226,232,240,0.8)' }}>
-                                            {selectedNpc === 'gorex' && '마진 40%의 부당함을 데이터로 논파하여 유통 구조 개선을 약속받으세요.'}
-                                            {selectedNpc === 'tierra' && '공감으로 마음을 열고, 공정무역 인증과 협동조합 참여를 권유하세요.'}
-                                            {selectedNpc === 'maxwell' && 'CSR 보고서와 실제 행동의 모순을 지적하여 공정무역 파일럿 도입을 이끌어내세요.'}
-                                            {selectedNpc === 'amara' && '인증 비용 지원 등 구체적 방안을 제시하여 협동조합 확대를 도우세요.'}
-                                            {selectedNpc === 'kim' && '가격 차이가 하루 200원이라는 점을 알려 공정무역 소비 참여를 이끌어내세요.'}
-                                        </span>
                                     </div>
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            )}
-
-            {/* Chat area */}
-            <div className="flex-1 rounded-2xl p-4 overflow-y-auto mb-2"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)', minHeight: 100 }}>
-                {chatHistory.map((msg, i) => <ChatBubble key={i} msg={msg} />)}
-                {sending && (
-                    <div className="flex items-center gap-2 text-xs mb-4" style={{ color: 'rgba(167,139,250,0.5)' }}>
-                        <div className="flex gap-1">
-                            {[0, 1, 2].map(i => (
-                                <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: '#a78bfa', animationDelay: `${i * 0.15}s` }} />
-                            ))}
-                        </div>
-                        {npc?.name} 이(가) 생각 중...
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 )}
-                <div ref={bottomRef} />
-            </div>
 
-            {/* Action Card */}
-            <div className="flex items-center gap-3 mb-2 flex-shrink-0">
-                <motion.button
-                    onClick={useActionCard}
-                    disabled={actionUsed}
-                    whileHover={actionUsed ? {} : { scale: 1.02 }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
-                    style={{
-                        background: actionUsed ? 'rgba(255,255,255,0.05)' : `${action?.color}20`,
-                        border: `1px solid ${actionUsed ? 'rgba(255,255,255,0.1)' : action?.color + '50'}`,
-                        color: actionUsed ? '#627290' : action?.color,
-                    }}
-                    title={actionUsed ? '이미 사용했습니다' : '전용 액션 카드 사용'}
-                    aria-label={`전용 액션: ${action?.label}`}
-                >
-                    {actionUsed ? <Lock size={12} /> : <Zap size={12} />}
-                    {action?.emoji} {action?.label}
-                </motion.button>
-                {actionUsed && <span className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>사용 완료 (1회/세션)</span>}
-            </div>
-
-            {/* 라운드 소진 안내 */}
-            {isExhausted && (
-                <div className="mb-2 px-4 py-2 rounded-xl text-xs text-center"
-                    style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e' }}>
-                    ⚠️ 이 NPC와의 라운드가 종료됐습니다. 다른 NPC와 대화하세요.
+                {/* Chat area */}
+                <div className="flex-1 rounded-2xl p-4 overflow-y-auto mb-2"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(139,92,246,0.15)', minHeight: 200 }}>
+                    {chatHistory.map((msg, i) => <ChatBubble key={i} msg={msg} />)}
+                    {sending && (
+                        <div className="flex items-center gap-2 text-xs mb-4" style={{ color: 'rgba(167,139,250,0.5)' }}>
+                            <div className="flex gap-1">
+                                {[0, 1, 2].map(i => (
+                                    <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: '#a78bfa', animationDelay: `${i * 0.15}s` }} />
+                                ))}
+                            </div>
+                            {npc?.name} 이(가) 생각 중...
+                        </div>
+                    )}
+                    <div ref={bottomRef} />
                 </div>
-            )}
 
-            {/* Input */}
-            <div className="flex gap-3 flex-shrink-0">
-                <input
-                    value={input}
-                    onChange={e => setInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage(input))}
-                    placeholder={isExhausted ? '라운드 종료 — 다른 NPC를 선택하세요' : `${npc?.name}에게 메시지 보내기... (Enter로 전송)`}
-                    disabled={isExhausted || npc?.isPersuaded}
-                    className="flex-1 px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', color: '#f0f0f5' }}
-                    onFocus={e => { if (!isExhausted) e.currentTarget.style.borderColor = 'rgba(124,58,237,0.6)'; }}
-                    onBlur={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'; }}
-                    aria-label="NPC에게 메시지 입력"
-                />
-                <motion.button
-                    whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    onClick={() => sendMessage(input)}
-                    disabled={!input.trim() || sending || isExhausted || npc?.isPersuaded}
-                    className="w-12 h-12 rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
-                    style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}
-                    aria-label="메시지 전송"
-                >
-                    <Send size={16} color="#fff" />
-                </motion.button>
-            </div>
+                {/* Action Card */}
+                <div className="flex items-center gap-3 mb-2 flex-shrink-0">
+                    <motion.button
+                        onClick={useActionCard}
+                        disabled={actionUsed}
+                        whileHover={actionUsed ? {} : { scale: 1.02 }}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                        style={{
+                            background: actionUsed ? 'rgba(255,255,255,0.05)' : `${action?.color}20`,
+                            border: `1px solid ${actionUsed ? 'rgba(255,255,255,0.1)' : action?.color + '50'}`,
+                            color: actionUsed ? '#627290' : action?.color,
+                        }}
+                        title={actionUsed ? '이미 사용했습니다' : '전용 액션 카드 사용'}
+                        aria-label={`전용 액션: ${action?.label}`}
+                    >
+                        {actionUsed ? <Lock size={12} /> : <Zap size={12} />}
+                        {action?.emoji} {action?.label}
+                    </motion.button>
+                    {actionUsed && <span className="text-xs" style={{ color: 'rgba(139,92,246,0.4)' }}>사용 완료 (1회/세션)</span>}
+                </div>
 
-            {/* Persuade complete banner */}
-            <AnimatePresence>
-                {persuadeCount >= 3 && (
-                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                        className="mt-4 rounded-2xl p-4 text-center"
-                        style={{ background: 'rgba(6,214,160,0.12)', border: '1px solid rgba(6,214,160,0.35)' }}>
-                        <div className="text-2xl mb-1">🎉</div>
-                        <p className="font-black text-white text-sm">3명 이상 설득 완료!</p>
-                        <p className="text-xs mt-1" style={{ color: 'rgba(6,214,160,0.8)' }}>선생님이 Phase 3으로 넘겨주실 때까지 대화를 계속하세요.</p>
-                    </motion.div>
+                {/* 라운드 소진 안내 */}
+                {isExhausted && (
+                    <div className="mb-2 px-4 py-2 rounded-xl text-xs text-center"
+                        style={{ background: 'rgba(244,63,94,0.1)', border: '1px solid rgba(244,63,94,0.3)', color: '#f43f5e' }}>
+                        ⚠️ 이 NPC와의 라운드가 종료됐습니다. 다른 NPC와 대화하세요.
+                    </div>
                 )}
-            </AnimatePresence>
-        </motion.div>
+
+                {/* Input */}
+                <div className="flex gap-3 flex-shrink-0">
+                    <input
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage(input))}
+                        placeholder={isExhausted ? '라운드 종료 — 다른 NPC를 선택하세요' : `${npc?.name}에게 메시지 보내기... (Enter로 전송)`}
+                        disabled={isExhausted || npc?.isPersuaded}
+                        className="flex-1 px-4 py-3 rounded-xl text-sm outline-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(139,92,246,0.2)', color: '#f0f0f5' }}
+                        onFocus={e => { if (!isExhausted) e.currentTarget.style.borderColor = 'rgba(124,58,237,0.6)'; }}
+                        onBlur={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'; }}
+                        aria-label="NPC에게 메시지 입력"
+                    />
+                    <motion.button
+                        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                        onClick={() => sendMessage(input)}
+                        disabled={!input.trim() || sending || isExhausted || npc?.isPersuaded}
+                        className="w-12 h-12 rounded-xl flex items-center justify-center transition-all disabled:opacity-40"
+                        style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}
+                        aria-label="메시지 전송"
+                    >
+                        <Send size={16} color="#fff" />
+                    </motion.button>
+                </div>
+
+                {/* Persuade complete banner */}
+                <AnimatePresence>
+                    {persuadeCount >= 3 && (
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                            className="mt-4 rounded-2xl p-4 text-center"
+                            style={{ background: 'rgba(6,214,160,0.12)', border: '1px solid rgba(6,214,160,0.35)' }}>
+                            <div className="text-2xl mb-1">🎉</div>
+                            <p className="font-black text-white text-sm">3명 이상 설득 완료!</p>
+                            <p className="text-xs mt-1" style={{ color: 'rgba(6,214,160,0.8)' }}>선생님이 Phase 3으로 넘겨주실 때까지 대화를 계속하세요.</p>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
+        </>
     );
 }

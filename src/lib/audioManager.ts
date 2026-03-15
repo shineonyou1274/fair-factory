@@ -121,8 +121,24 @@ class AudioManager {
         }
     }
 
+    // ─── 볼륨 조절 (Ducking/Restore) ───────────────────────────
+    private originalBgmVolume: number | null = null;
+
+    duckBGM(targetVol: number = 0.05, ms: number = 800) {
+        if (!this.bgmAudio || this.muted) return;
+        this.originalBgmVolume = this.bgmAudio.volume;
+        this._fadeTo(this.bgmAudio, targetVol, ms);
+    }
+
+    restoreBGM(ms: number = 1000) {
+        if (!this.bgmAudio || this.muted || this.originalBgmVolume === null) return;
+        this._fadeTo(this.bgmAudio, this.originalBgmVolume, ms);
+        this.originalBgmVolume = null;
+    }
+
     // ─── SFX (Web Audio API 합성 — 파일 없이 동작!) ──────────────
     private _ctx: AudioContext | null = null;
+    private sfxLastPlayed: Partial<Record<SFXKey, number>> = {};
 
     private get ctx(): AudioContext {
         if (!this._ctx) this._ctx = new AudioContext();
@@ -134,6 +150,12 @@ class AudioManager {
 
     playSFX(key: SFXKey) {
         if (this.muted || !this.userInteracted) return;
+
+        // 너무 빠른 효과음 중복 실행 방지 (쓰로틀링)
+        const now = Date.now();
+        if (this.sfxLastPlayed[key] && now - this.sfxLastPlayed[key]! < 80) return;
+        this.sfxLastPlayed[key] = now;
+
         try {
             const vol = this.sfxVolume;
             switch (key) {
@@ -424,16 +446,28 @@ class AudioManager {
 
     // ─── 유틸 ─────────────────────────────────────────────────
     private _fadeIn(audio: HTMLAudioElement, target: number, ms: number) {
-        const step = target / (ms / 50);
+        this._fadeTo(audio, target, ms);
+    }
+
+    private _fadeTo(audio: HTMLAudioElement, target: number, ms: number) {
+        const startVol = audio.volume;
+        const diff = target - startVol;
+        if (diff === 0) return;
+        const steps = 20;
+        const stepTime = ms / steps;
+        const stepVol = diff / steps;
+
+        let currentStep = 0;
         const timer = setInterval(() => {
+            currentStep++;
             if (!audio) { clearInterval(timer); return; }
-            if (audio.volume + step >= target) {
-                audio.volume = target;
+            const nextVol = startVol + (stepVol * currentStep);
+            audio.volume = Math.max(0, Math.min(1, nextVol));
+            if (currentStep >= steps) {
+                audio.volume = Math.max(0, Math.min(1, target));
                 clearInterval(timer);
-            } else {
-                audio.volume = Math.min(audio.volume + step, target);
             }
-        }, 50);
+        }, stepTime);
     }
 
     private _saveSettings() {

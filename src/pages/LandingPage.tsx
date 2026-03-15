@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { GraduationCap, Sparkles, ChevronRight, Globe, ChevronDown, Link2, Scale, Swords } from 'lucide-react';
 import { useUIStore } from '@/store';
 import { audioManager } from '@/lib/audioManager';
@@ -128,13 +128,30 @@ export default function LandingPage() {
     const navigate = useNavigate();
     const { setLanguage, language } = useUIStore();
     const { scrollY } = useScroll();
+    const [introStep, setIntroStep] = useState(0);
 
-    // Landing BGM — 첫 인터랙션 후 자동 재생
-    // stopBGM을 cleanup에서 제거: GameRoom 진입 시 자동으로 교체됨
-    // 여기서 stop하면 첫 클릭(네비게이션)이 BGM 시작 직후 stop을 호출하여 음악이 안 들림
+    const introDialogues = [
+        "똑똑! 저희 목소리가 들리시나요?",
+        "누군가 도와주러 온 것 같아!",
+        "이곳은 마몬의 탐욕에 갇힌 '침묵의 성'입니다.",
+        "현자들을 구출하고 공정의 노래를 되찾아주세요!",
+        "자, 화면을 살펴보고 '공정가'가 되어주세요!",
+    ];
+
     useEffect(() => {
-        audioManager.playBGM('landing');
-    }, []);
+        // 첫 시작 시 오디오 재생 대기 (인터랙션 필요)
+        // introStep이 1 이상이 되면 재생
+        if (introStep === 1) {
+            audioManager.playBGM('landing');
+        }
+    }, [introStep]);
+
+    const nextIntro = () => {
+        if (introStep < introDialogues.length) {
+            setIntroStep(s => s + 1);
+            if (introStep > 0) audioManager.playSFX('click');
+        }
+    };
 
     // Parallax - castle image scrolls slower than content
     const castleY = useTransform(scrollY, [0, 600], [0, 120]);
@@ -248,6 +265,37 @@ export default function LandingPage() {
                         }}
                     />
                 ))}
+
+                {/* BGM Prompt (Tutorial Style Overlay) */}
+                <AnimatePresence>
+                    {introStep < introDialogues.length && (
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[100] flex items-center justify-center cursor-pointer"
+                            style={{ background: 'rgba(10,6,24,0.85)', backdropFilter: 'blur(8px)' }}
+                            onClick={nextIntro}
+                        >
+                            <motion.div
+                                key={introStep}
+                                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: -20 }}
+                                className="px-8 py-6 rounded-3xl max-w-sm text-center shadow-2xl"
+                                style={{ background: 'linear-gradient(135deg, rgba(124,58,237,0.3), rgba(76,29,149,0.5))', border: '1px solid rgba(167,139,250,0.5)' }}
+                            >
+                                <div className="text-4xl mb-4 animate-bounce">
+                                    {introStep === 0 ? '🆘' : introStep === introDialogues.length - 1 ? '✨' : '💬'}
+                                </div>
+                                <p className="text-xl sm:text-2xl font-black text-white leading-relaxed mb-6">
+                                    {introDialogues[introStep]}
+                                </p>
+                                <div className="text-xs font-bold uppercase tracking-widest animate-pulse" style={{ color: 'rgba(196,181,253,0.7)' }}>
+                                    화면을 터치하세요
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* ── Main Content ── */}
                 <motion.div
