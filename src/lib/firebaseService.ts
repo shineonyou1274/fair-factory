@@ -8,7 +8,7 @@
 
 import {
     collection, doc, setDoc, getDoc, updateDoc, query,
-    where, getDocs, serverTimestamp, onSnapshot, Timestamp,
+    where, getDocs, serverTimestamp, onSnapshot, Timestamp, deleteDoc
 } from 'firebase/firestore';
 import { ref, set, update, onValue, off, serverTimestamp as rtdbTimestamp } from 'firebase/database';
 import { db, rtdb, auth } from '@/lib/firebase';
@@ -148,6 +148,12 @@ export const SessionService = {
         await update(ref(rtdb, `sessions/${sessionCode}`), { isActive: false });
     },
 
+    /** 세션 삭제 */
+    async delete(sessionCode: string) {
+        await deleteDoc(doc(db, 'sessions', sessionCode));
+        await set(ref(rtdb, `sessions/${sessionCode}`), null);
+    },
+
     /** 세션 학생 목록 실시간 구독 */
     subscribeStudents(sessionCode: string, callback: (students: StudentActivity[]) => void): () => void {
         const q = query(collection(db, 'sessions', sessionCode, 'students'));
@@ -178,13 +184,13 @@ export const StudentService = {
         student: StudentActivity;
         session: ClassSession;
     }> {
-        // 1. 세션 확인
+        // 1. 익명 로그인 먼저 수행 (Firestore 권한 획득)
+        const { user } = await signInAnonymously(auth);
+
+        // 2. 세션 확인
         const session = await SessionService.getByCode(sessionCode);
         if (!session) throw new Error('SESSION_NOT_FOUND');
         if (!session.isActive) throw new Error('SESSION_INACTIVE');
-
-        // 2. 익명 로그인
-        const { user } = await signInAnonymously(auth);
 
         // 3. 현재 세션 학생 수 확인하여 페르소나 배정
         const existingStudents = await getDocs(collection(db, 'sessions', sessionCode, 'students'));

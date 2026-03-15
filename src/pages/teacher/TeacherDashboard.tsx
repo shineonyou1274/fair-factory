@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, LogOut, Copy, Check, Users, ChevronRight,
-    Zap, Award, BarChart3, Clock, Settings, Shield,
+    Zap, Award, BarChart3, Clock, Settings, Shield, Trash2,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -30,7 +30,7 @@ function StatCard({ icon: Icon, label, value, color }: {
 }
 
 // ── Session Card ──────────────────────────────────────────────
-function SessionCard({ session, onEnter }: { session: ClassSession; onEnter: () => void }) {
+function SessionCard({ session, onEnter, onDelete }: { session: ClassSession; onEnter: () => void; onDelete: () => void }) {
     const [copied, setCopied] = useState(false);
     const [settingsTip, setSettingsTip] = useState(false);
     const phaseNames = ['환상의 장막', '진실의 돋보기', '지혜의 토론', '공정의 설계'];
@@ -71,20 +71,26 @@ function SessionCard({ session, onEnter }: { session: ClassSession; onEnter: () 
                         {new Date(session.createdAt).toLocaleDateString('ko-KR')} 생성
                     </p>
                 </div>
-                {/* Class Code */}
-                <div className="text-right">
-                    <div className="text-xs mb-1" style={{ color: 'rgba(167,139,250,0.5)' }}>학급 코드</div>
+                {/* Class Code & Delete */}
+                <div className="flex flex-col items-end gap-2 text-right">
                     <div className="flex items-center gap-2">
-                        <span className="text-2xl font-black font-mono tracking-widest" style={{ color: '#fbbf24' }}>
+                        <div className="text-xs" style={{ color: 'rgba(167,139,250,0.5)' }}>학급 코드</div>
+                        <span className="text-xl font-black font-mono tracking-widest" style={{ color: '#fbbf24' }}>
                             {session.classCode}
                         </span>
                         <button onClick={copyCode}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                            className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
                             style={{ background: copied ? 'rgba(6,214,160,0.2)' : 'rgba(255,255,255,0.08)' }}
                             aria-label="코드 복사">
-                            {copied ? <Check size={14} style={{ color: '#06d6a0' }} /> : <Copy size={14} style={{ color: '#a78bfa' }} />}
+                            {copied ? <Check size={12} style={{ color: '#06d6a0' }} /> : <Copy size={12} style={{ color: '#a78bfa' }} />}
                         </button>
                     </div>
+                    <button onClick={onDelete}
+                        className="flex items-center justify-center w-7 h-7 rounded-lg transition-all"
+                        style={{ background: 'rgba(244,63,94,0.1)', color: '#f43f5e', border: '1px solid rgba(244,63,94,0.2)' }}
+                        aria-label="세션 삭제">
+                        <Trash2 size={12} />
+                    </button>
                 </div>
             </div>
 
@@ -158,12 +164,15 @@ export default function TeacherDashboard() {
                 if (isFirebaseConfigured() && user?.uid) {
                     const { TeacherService } = await import('@/lib/firebaseService');
                     const real = await TeacherService.getSessions(user.uid);
-                    setSessions(real.length > 0 ? real : []);
-                } else {
+                    setSessions(real);
+                } else if (!isFirebaseConfigured()) {
                     setSessions([MOCK_SESSION]);
+                } else {
+                    setSessions([]);
                 }
-            } catch {
-                setSessions([MOCK_SESSION]);
+            } catch (e) {
+                console.error('Failed to load sessions:', e);
+                setSessions([]);
             } finally {
                 setLoadingSessions(false);
             }
@@ -180,6 +189,19 @@ export default function TeacherDashboard() {
     function handleEnterSession(session: ClassSession) {
         setSession(session);
         navigate(`/teacher/session/${session.id}`);
+    }
+
+    function handleDeleteSession(id: string) {
+        if (!confirm('정말로 이 수업을 삭제하시겠습니까?\n모든 데이터가 삭제되며 복구할 수 없습니다.')) return;
+
+        if (isFirebaseConfigured()) {
+            import('@/lib/firebaseService').then(({ SessionService }) => {
+                SessionService.delete(id);
+                setSessions(prev => prev.filter(s => s.id !== id));
+            }).catch(console.error);
+        } else {
+            setSessions(prev => prev.filter(s => s.id !== id));
+        }
     }
 
     return (
@@ -293,7 +315,7 @@ export default function TeacherDashboard() {
                             ) : (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                                     {sessions.map((s) => (
-                                        <SessionCard key={s.id} session={s} onEnter={() => handleEnterSession(s)} />
+                                        <SessionCard key={s.id} session={s} onEnter={() => handleEnterSession(s)} onDelete={() => handleDeleteSession(s.id)} />
                                     ))}
                                 </div>
                             )}

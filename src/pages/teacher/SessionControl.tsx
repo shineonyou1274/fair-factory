@@ -272,7 +272,13 @@ export default function SessionControl() {
                         ) : (
                             <motion.button
                                 initial={{ scale: 0.9 }} animate={{ scale: 1 }}
-                                onClick={() => navigate(`/game/${classCode}/results`)}
+                                onClick={async () => {
+                                    if (isFirebaseConfigured() && sessionId) {
+                                        const { SessionService } = await import('@/lib/firebaseService');
+                                        await SessionService.close(sessionId);
+                                    }
+                                    navigate(`/game/${classCode}/results`);
+                                }}
                                 className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white"
                                 style={{ background: 'linear-gradient(135deg, #f43f5e, #e8192c)', boxShadow: '0 0 15px rgba(244,63,94,0.4)' }}
                             >
